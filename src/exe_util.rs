@@ -27,8 +27,7 @@ fn find_program(path: &PathBuf) -> Option<PathBuf> {
     let path = if path.is_absolute() {
         path.to_path_buf()
     } else if has_parent(path) {
-        std::fs::canonicalize(path).unwrap().exists();
-        std::fs::canonicalize(dbg!(path)).ok()?
+        std::fs::canonicalize(path).ok()?
     } else {
         let path_str = path.to_str()?;
         search_on_path_env(path_str)?
