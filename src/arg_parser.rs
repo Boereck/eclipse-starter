@@ -1,3 +1,12 @@
+//! This module provides functionality to parse command line parameters.
+//! First a `Parser` needs to be created using `Parser::new()`, then 
+//! Parsing rules need to be added using the `add_*` methods on the parser.
+//! To start parsing, the `parse` method needs to be called with an iterator 
+//! over the parameters.
+//! To get the results for parsing rules, the id values returned from the `add_*`
+//! methods need to be passed to the `take_*` methods on the `ParseResult`.
+//! ## TODO: Example
+
 use std::collections::{HashMap, HashSet};
 
 #[derive(Eq,PartialEq,Hash,Debug,Clone,Copy)]

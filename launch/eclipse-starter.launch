@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.corrosion.run.CargoRunDelegate">
+<stringAttribute key="ARGUMENTS" value=""/>
+<stringAttribute key="OPTIONS" value=""/>
+<stringAttribute key="PROJECT" value="eclipse-starter"/>
+<stringAttribute key="WORKING_DIRECTORY" value="eclipse-starter"/>
+<mapAttribute key="org.eclipse.debug.core.environmentVariables">
+<mapEntry key="DEFAULT_OS" value="win32"/>
+<mapEntry key="DEFAULT_OS_ARCH" value="x86_64"/>
+<mapEntry key="DEFAULT_WS" value="win32"/>
+<mapEntry key="RUST_BACKTRACE" value="1"/>
+</mapAttribute>
+</launchConfiguration>
