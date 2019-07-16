@@ -53,7 +53,6 @@ pub fn find_file(location: &Path, name_prefix: &str) -> Option<PathBuf> {
     std::fs::read_dir(location)
         .ok()?
         .filter_map(Result::ok)
-        .filter(|entry| is_file(entry))
         .filter_map(filename_entry_tuple)
         .filter(|(name, _)| name.starts_with(name_prefix))
         .max_by_key(|(name, _)| {
@@ -68,10 +67,6 @@ pub fn find_file(location: &Path, name_prefix: &str) -> Option<PathBuf> {
 fn filename_entry_tuple(entry: DirEntry) -> Option<(String, DirEntry)> {
     let name = entry.file_name().into_string().ok()?;
     Some((name, entry))
-}
-
-fn is_file(entry: &DirEntry) -> bool {
-    entry.file_type().map(|t| t.is_file()).unwrap_or(false)
 }
 
 #[derive(Debug, Default, Ord, PartialOrd, Eq, PartialEq)]

@@ -229,7 +229,8 @@ pub fn find_library(library_dir: &Option<String>, program_dir: &Path) -> Result<
         let plugin_dir =
             plugin_dir_opt.ok_or_else(|| format!("Plugin not found in path {:?}", &plugin_path))?;
         find_file(&plugin_dir, "eclipse")
-            .ok_or_else(|| format!("Compagnion library not found in path {:?}", &plugin_dir))
+            .filter(|path| path.is_file())
+            .ok_or_else(|| format!("Companion library not found in path {:?}", &plugin_dir))
     }
 }
 
