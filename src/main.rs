@@ -13,7 +13,7 @@ use arg_parser::*;
 use ini_reader::*;
 use params::EclipseLauncherParams;
 use unicode_segmentation::UnicodeSegmentation;
-use launcher_lib::{find_library, load_library, EclipseLauncherLib};
+use launcher_lib::{find_library, load_library, EclipseLauncherLib, SetInitialArgsParams};
 use exe_util::get_exe_path;
 
 
@@ -60,7 +60,6 @@ fn main() {
     let result = load_lib_and_run(&params, &command_line_args, &ini_file_args, &exe_path);
     // TODO: proper error handling, if !params.suppress_errors
     result.unwrap();
-    dbg!(params);
 }
 
 fn load_lib_and_run(params: &EclipseLauncherParams, command_line_args : &[String], ini_file_args: &[String], exe_path: &Path) -> Result<(),String> {
@@ -71,10 +70,11 @@ fn load_lib_and_run(params: &EclipseLauncherParams, command_line_args : &[String
     
     // If no VM args are set use empty slice
     let lib_path_str = &lib_path.to_str().ok_or_else(|| "Converting library path name failed".to_string())?;
-    lib_api.set_initial_args(command_line_args, lib_path_str)?;
+    let initial_args_params = SetInitialArgsParams::new(command_line_args, lib_path_str);
+    lib_api.set_initial_args(&initial_args_params)?;
 
     // call run on the library
-    let exe_path_str = lib_path.to_str().ok_or_else(|| "Converting exe path name failed".to_string())?;
+    let exe_path_str = exe_path.to_str().ok_or_else(|| "Converting exe path name failed".to_string())?;
     let merged_args: Vec<&str> = merge_parameters(exe_path_str, ini_file_args, command_line_args);
     let vm_args : Vec<&str> = params.vm_args.iter().flatten().map(String::as_str).collect();
     lib_api.run(&merged_args, &vm_args)

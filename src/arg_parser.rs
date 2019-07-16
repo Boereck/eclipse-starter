@@ -225,7 +225,7 @@ mod parser_test {
     #[test]
     fn test_parsing_flag() {
         let args = ["-clean"];
-        let iter = args.iter().map(|s| *s);
+        let iter = args.iter().copied();
         
         let mut parser = super::Parser::new();
         let clean = parser.add_flag("-clean");

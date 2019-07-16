@@ -1,5 +1,4 @@
 use std::path::PathBuf;
-use std::path::Path;
 use std::io;
 use crate::path_util::*;
 
@@ -28,7 +27,7 @@ fn find_program(path: &PathBuf) -> Option<PathBuf> {
     let path = if path.is_absolute() {
         path.to_path_buf()
     } else if has_parent(path) {
-        std::fs::canonicalize(path).ok()?
+        dbg!(std::fs::canonicalize(dbg!(path)).ok()?)
     } else {
         let path_str = path.to_str()?;
         search_on_path_env(path_str)?

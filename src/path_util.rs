@@ -32,7 +32,7 @@ pub fn check_path(path: &Path, program_dir: &Path, reverse_order: bool) -> PathB
     };
     for search_path in search_paths.iter() {
         let absolute_path: PathBuf = [search_path, path].iter().collect();
-        if dbg!(&absolute_path).exists() {
+        if absolute_path.exists() {
             return absolute_path;
         }
     }
