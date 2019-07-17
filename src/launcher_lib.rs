@@ -9,22 +9,18 @@
 
 //use libc::c_int;
 use crate::path_util::*;
+use crate::compile_params::*;
 use dlopen::symbor::{Library, SymBorApi, Symbol};
 use dlopen_derive::*;
-use std::os::raw::c_int;
+use std::ffi::CString;
+use std::marker::PhantomData;
+use std::os::raw::{c_char, c_int};
 use std::path::Path;
 use std::path::PathBuf;
-use std::marker::PhantomData;
 
 static DEFAULT_EQUINOX_STARTUP: &str = "org.eclipse.equinox.launcher";
 
-static DEFAULT_OS: Option<&str> = option_env!("DEFAULT_OS");
-
-static DEFAULT_OS_ARCH: Option<&str> = option_env!("DEFAULT_OS_ARCH");
-
-static DEFAULT_WS: Option<&str> = option_env!("DEFAULT_WS");
-
-// On Windows we use
+// On Windows we use UTF-16 chars
 #[cfg(windows)]
 type NativeString = *const u16;
 
@@ -69,7 +65,11 @@ impl<'a> EclipseLauncherLib<'a> {
     }
 
     #[cfg(windows)]
-    pub fn run<S: AsRef<str> + std::fmt::Debug>(&self, args: &[S], vm_args: &[S]) -> Result<(), String> {
+    pub fn run<S: AsRef<str> + std::fmt::Debug>(
+        &self,
+        args: &[S],
+        vm_args: &[S],
+    ) -> Result<(), String> {
         // Convert parameters
         let utf16_args = str_slice_to_widechar_vec(args);
         let count_args: c_int = utf16_args.len() as c_int;
@@ -111,9 +111,14 @@ impl<'a> EclipseLauncherLib<'a> {
 
     #[cfg(not(windows))]
     pub fn set_initial_args<S: AsRef<str>>(&self, args: &[S], library: &str) -> Result<(), String> {
-        let arg_count = args.len();
-        // TODO: convert params, call lib_api.set_initial_args
-        unimplemented!()
+        // Convert parameters to native
+        let arg_count = params.arg_count;
+        let args_native = params.args_ptr_nativestr;
+        let library_native_str = params.library_nativestr;
+        unsafe {
+            (self.lib_api.set_initial_args)(arg_count, args_native, library_native_str);
+        }
+        Ok(())
     }
 }
 
@@ -127,14 +132,12 @@ pub struct SetInitialArgsParams<'a> {
     library_vec_u16: Vec<u16>,
     library_native_str: NativeString,
     // phantom needed to make use of lifetime 'a
-    phantom: PhantomData<&'a NativeString>
+    phantom: PhantomData<&'a NativeString>,
 }
 
 #[cfg(windows)]
-impl <'a> SetInitialArgsParams<'a> {
-    
-    pub fn new<'b, S: AsRef<str>>(args: &'b[S], library: &'b str) -> Self {
-
+impl<'a> SetInitialArgsParams<'a> {
+    pub fn new<'b, S: AsRef<str>>(args: &'b [S], library: &'b str) -> Self {
         let args_vec_vec_u16_param = str_slice_to_widechar_vec(args);
         let args_vec_nativestr_param = vec_to_native_string(&args_vec_vec_u16_param);
         let args_ptr_nativestr_param = args_vec_nativestr_param.as_ptr();
@@ -155,13 +158,34 @@ impl <'a> SetInitialArgsParams<'a> {
 
 #[cfg(not(windows))]
 pub struct SetInitialArgsParams<'a> {
+    arg_count: c_int,
+    args_vec_cstring: Vec<CString>,
+    args_vec_nativestr: Vec<NativeString>,
+    args_ptr_nativestr: *const NativeString,
+    // phantom needed to make use of lifetime 'a
+    phantom: PhantomData<&'a NativeString>,
 }
 
 #[cfg(not(windows))]
-impl <'a> SetInitialArgsParams<'a> {
-    
-    pub fn new<'b, S: AsRef<str>>(args: &'b[S], library: &'b str) -> Self {
-        unimplemented!()
+impl<'a> SetInitialArgsParams<'a> {
+    pub fn new<'b, S: AsRef<str>>(args: &'b [S], library: &'b str) -> Self {
+        let args_vec_cstring_param = args
+            .filter_map(|s| CString::new(s).ok())
+            .collect::<Vec<CString>>();
+        let args_vec_nativestr_param = args.map(|s| s.as_ptr()).collect::<Vec<NativeString>>();
+        let args_ptr_nativestr_param = args_vec_nativestr_param.as_ptr();
+
+        let library_cstring_param = CString::new(library).unwrap_or_else(|| CString::default());
+        let library_ptr_param: NativeString = library_cstring_param.as_ptr();
+        Self {
+            arg_count: args.len() as c_int,
+            args_vec_cstring: args_vec_cstring_param,
+            args_vec_nativestr: args_vec_nativestr_param,
+            args_ptr_nativestr: args_ptr_nativestr_param,
+            library_cstring: library_cstring_param,
+            library_nativestr: library_ptr_param,
+            phantom: PhantomData,
+        }
     }
 }
 
@@ -234,73 +258,4 @@ pub fn find_library(library_dir: &Option<String>, program_dir: &Path) -> Result<
     }
 }
 
-// make const as soon as get_default_os and get_default_arch are const
-fn is_macos_non_x86_64() -> bool {
-    get_default_os() == "macosx" && get_default_arch() != "x86_64"
-}
 
-// make this fn const as soon as Option::unwrap_or is a const fn.
-#[cfg(target_os = "windows")]
-fn get_default_os() -> &'static str {
-    DEFAULT_OS.unwrap_or("win32")
-}
-
-// make this fn const as soon as Option::unwrap_or is a const fn.
-#[cfg(target_os = "macos")]
-fn get_default_os() -> &'static str {
-    DEFAULT_OS.unwrap_or("macosx")
-}
-
-// make this fn const as soon as Option::unwrap_or is a const fn.
-#[cfg(target_os = "linux")]
-fn get_default_os() -> &'static str {
-    DEFAULT_OS.unwrap_or("linux")
-}
-
-// make this fn const as soon as Option::unwrap_or is a const fn.
-#[cfg(target_arch = "x86")]
-fn get_default_arch() -> &'static str {
-    DEFAULT_ARCH.unwrap_or("x86")
-}
-
-// make this fn const as soon as Option::unwrap_or is a const fn.
-#[cfg(target_arch = "x86_64")]
-fn get_default_arch() -> &'static str {
-    DEFAULT_OS_ARCH.unwrap_or("x86_64")
-}
-
-// make this fn const as soon as Option::unwrap_or is a const fn.
-#[cfg(target_arch = "powerpc")]
-fn get_default_arch() -> &'static str {
-    DEFAULT_OS_ARCH.unwrap_or("ppc")
-}
-
-// make this fn const as soon as Option::unwrap_or is a const fn.
-#[cfg(target_arch = "arm")]
-fn get_default_arch() -> &'static str {
-    DEFAULT_OS_ARCH.unwrap_or("arm")
-}
-
-// make this fn const as soon as Option::unwrap_or is a const fn.
-#[cfg(target_arch = "aarch64")]
-fn get_default_arch() -> &'static str {
-    DEFAULT_OS_ARCH.unwrap_or("aarch64")
-}
-
-// make this fn const as soon as Option::unwrap_or is a const fn.
-#[cfg(target_os = "windows")]
-fn get_default_ws() -> &'static str {
-    DEFAULT_WS.unwrap_or("win32")
-}
-
-// make this fn const as soon as Option::unwrap_or is a const fn.
-#[cfg(target_os = "macos")]
-fn get_default_ws() -> &'static str {
-    DEFAULT_WS.unwrap_or("cocoa")
-}
-
-// make this fn const as soon as Option::unwrap_or is a const fn.
-#[cfg(target_os = "linux")]
-fn get_default_ws() -> &'static str {
-    DEFAULT_WS.unwrap_or("gtk")
-}

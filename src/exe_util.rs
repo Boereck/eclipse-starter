@@ -2,6 +2,15 @@ use std::path::PathBuf;
 use std::io;
 use crate::path_util::*;
 
+
+// It seems there is no constant for paths separator in 
+
+#[cfg(windows)]
+const PATHS_SEPARATOR: char = ';';
+
+#[cfg(not(windows))]
+const PATHS_SEPARATOR: char = ':';
+
 /// If `exe_path` is a symlink, the symlink is resolved 
 /// (and if the resolved file is a symlink as well it will continue resolving)
 /// and the resolved file will be returned.
@@ -36,8 +45,16 @@ fn find_program(path: &PathBuf) -> Option<PathBuf> {
 }
 
 fn search_on_path_env(path: &str) -> Option<PathBuf> {
-    // TODO implement
-    // on windows prepend curr dir
-    None
+    let path_env = std::env::var("PATH").ok()?;
+    
+    path_env.split(PATHS_SEPARATOR)
+        .map(PathBuf::from)
+        .filter(|p| p.is_dir())
+        .map(|mut p| { 
+            p.push(path); 
+            p
+         })
+        .filter(|p| p.exists())
+        .next()
 }
 

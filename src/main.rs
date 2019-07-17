@@ -1,3 +1,6 @@
+//! This module is the entrypoint to the eclipse launcher executable.
+//! 
+
 //#![windows_subsystem = "windows"]
 mod windows;
 
@@ -7,6 +10,7 @@ mod params;
 mod launcher_lib;
 mod exe_util;
 mod path_util;
+mod compile_params;
 
 use std::path::Path;
 use arg_parser::*;
@@ -31,13 +35,14 @@ fn main() {
     let mut params = EclipseLauncherParams::default();
     let command_line_args: Vec<String> = std::env::args().collect();
     let mut ini_file_args = Vec::<String>::new();
-    // arguments without program location
+    // parse arguments without program location
     parse_arguments(
         &mut params,
         command_line_args.iter().map(String::as_str).skip(1),
     );
 
     // TODO: handle errors here!
+    // Determine the full pathname of this program.
     let exe_path = get_exe_path().unwrap();
     // read ini, only set params not already defined by program arguments
     if let Ok(ini_file_lines) = read_ini(&params.launcher_ini, &exe_path) {
@@ -51,6 +56,7 @@ fn main() {
 
     // get default name if not yet set
     if params.name.is_none() {
+        // Initialize official program name
         params.name = get_default_official_name()
     }
 
@@ -64,6 +70,7 @@ fn main() {
 
 fn load_lib_and_run(params: &EclipseLauncherParams, command_line_args : &[String], ini_file_args: &[String], exe_path: &Path) -> Result<(),String> {
     let exe_parent = exe_path.parent().ok_or_else(|| "Parent dir of executable not found".to_string())?;
+    // Find the eclipse library, load and initalize callable API
     let lib_path = find_library(&params.eclipse_library, exe_parent)?;
     let lib = load_library(&lib_path)?;
     let lib_api = EclipseLauncherLib::new(&lib)?;
@@ -85,6 +92,12 @@ fn load_lib_and_run(params: &EclipseLauncherParams, command_line_args : &[String
 /// `command_line_args` (where the first argument is dropped).
 fn merge_parameters<'a>(exe_path: &'a str, ini_file_args: &'a [String], command_line_args : &'a [String]) -> Vec<&'a str> {
     let mut result : Vec<&'a str> = Vec::new();
+    let exe_path_param = if cfg!(windows) {
+        // TODO: if library supports long path names, we don't have to strip
+        exe_path.trim_start_matches(r"\\?\")
+    } else {
+        exe_path
+    };
     result.push(exe_path);
     result.extend(ini_file_args.iter().map(String::as_str));
     result.extend(command_line_args.iter().skip(1).map(String::as_str));
