@@ -24,7 +24,7 @@ pub fn check_path(path: &Path, program_dir: &Path, reverse_order: bool) -> PathB
     }
 
     // if we cannot get working_dir, we use an empty path
-    let working_dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::new());
+    let working_dir = std::env::current_dir().unwrap_or_default();
     let search_paths = if reverse_order {
         [&working_dir, program_dir]
     } else {
@@ -101,5 +101,5 @@ fn to_u32(m: Option<Match>) -> u32 {
 
 fn to_string(m: Option<Match>) -> String {
     m.map(|m| m.as_str().to_string())
-        .unwrap_or_else(String::new)
+        .unwrap_or_default()
 }

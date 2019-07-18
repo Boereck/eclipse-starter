@@ -17,7 +17,7 @@ use arg_parser::*;
 use ini_reader::*;
 use params::EclipseLauncherParams;
 use unicode_segmentation::UnicodeSegmentation;
-use launcher_lib::{find_library, load_library, EclipseLauncherLib, SetInitialArgsParams};
+use launcher_lib::{find_library, load_library, new_launcher, EclipseLauncher};
 use exe_util::get_exe_path;
 
 
@@ -73,11 +73,11 @@ fn load_lib_and_run(params: &EclipseLauncherParams, command_line_args : &[String
     // Find the eclipse library, load and initalize callable API
     let lib_path = find_library(&params.eclipse_library, exe_parent)?;
     let lib = load_library(&lib_path)?;
-    let lib_api = EclipseLauncherLib::new(&lib)?;
+    let lib_api = new_launcher(&lib)?;
     
     // If no VM args are set use empty slice
     let lib_path_str = &lib_path.to_str().ok_or_else(|| "Converting library path name failed".to_string())?;
-    let initial_args_params = SetInitialArgsParams::new(command_line_args, lib_path_str);
+    let initial_args_params = lib_api.new_initial_args(command_line_args, lib_path_str);
     lib_api.set_initial_args(&initial_args_params)?;
 
     // call run on the library
@@ -98,7 +98,7 @@ fn merge_parameters<'a>(exe_path: &'a str, ini_file_args: &'a [String], command_
     } else {
         exe_path
     };
-    result.push(exe_path);
+    result.push(exe_path_param);
     result.extend(ini_file_args.iter().map(String::as_str));
     result.extend(command_line_args.iter().skip(1).map(String::as_str));
     result

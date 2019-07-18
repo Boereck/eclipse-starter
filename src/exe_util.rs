@@ -54,7 +54,6 @@ fn search_on_path_env(path: &str) -> Option<PathBuf> {
             p.push(path); 
             p
          })
-        .filter(|p| p.exists())
-        .next()
+        .find(|p| p.exists())
 }
 
