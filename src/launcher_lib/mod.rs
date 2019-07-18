@@ -32,17 +32,39 @@ use std::path::PathBuf;
 
 static DEFAULT_EQUINOX_STARTUP: &str = "org.eclipse.equinox.launcher";
 
+/// Type holding inital parameters needed to call `EclipseLauncher::set_initial_args`.
 pub trait InitialArgs<'b> {
+	
+	/// Creates a new instance of a concrete `InitialArgs` implementation.
+	/// Note that users of this module shall use the function `EclipseLauncher::new_initial_args`
+	/// to create an instance of `InitialArgs`.
 	fn new<S: AsRef<str>>(args: &'b [S], library: &'b str) -> Self;
 }
 
+/// This trait represents the API surface of the launcers companion dynamic library.
+/// To craete an instance of this type, use function `new_launcher`.
 pub trait EclipseLauncher<'a, 'b>: Sized
 where
 	'b : 'a,
 {
 	type InitialArgsParams: InitialArgs<'b>;
+
+	/// Creates a new instance of a concrete `EclipseLauncher` implementation.
+	/// Note that users of this module shall use the function `new_launcher`
+	/// to craete an instance of `EclipseLauncher`.
 	fn new(lib: &'a Library) -> Result<Self, String>;
+
+	/// Starts the main application. The caller has to provide the merged
+	/// start parameters (first from config file, followed by arguments from command line)
+	/// without the JVM parameters. The JVM arguments from the command line are 
+	/// passed by the `vm_args` parameter.
+	/// 
+	/// *Note*: `set_initial_args` has to be called before calling this function.
 	fn run<S: AsRef<str>>(&self, args: &[S], vm_args: &[S]) -> Result<(), String>;
+	
+	/// Creates a `InitialArgsParams` value holding the information about
+	/// the initial command line arguments `args` and the file path to the 
+	/// dynamic companion library via `library` parameter.
 	#[inline]
 	fn new_initial_args<S: AsRef<str>>(
 		&self,
@@ -51,6 +73,11 @@ where
 	) -> Self::InitialArgsParams {
 		Self::InitialArgsParams::new(args, library)
 	}
+
+	/// Sets the initial command line arguments and the location of the
+	/// companion dynamic library. The `params` parameter value has to be created
+	/// by the caller via the `new_initial_args` function. 
+	/// This function needs to be called before calling the `run` function.
 	fn set_initial_args(&self, params: &Self::InitialArgsParams) -> Result<(), String>;
 }
 

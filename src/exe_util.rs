@@ -47,6 +47,9 @@ fn find_program(path: &PathBuf) -> Option<PathBuf> {
 fn search_on_path_env(path: &str) -> Option<PathBuf> {
     let path_env = std::env::var("PATH").ok()?;
     
+	// test for every path `prefix` in the PATH environment variable
+	// if the concatenation `prefix/path` exists and if so, return
+	// the resulting path.
     path_env.split(PATHS_SEPARATOR)
         .map(PathBuf::from)
         .filter(|p| p.is_dir())

@@ -32,7 +32,14 @@ const VMARGS_ARG: &str = "-vmargs";
 
 
 fn main() {
-    let mut params = EclipseLauncherParams::default();
+	let result = fallible_main();
+    // TODO: proper error handling, if !params.suppress_errors
+    result.unwrap();
+}
+
+#[inline]
+fn fallible_main() -> Result<(),String> {
+	let mut params = EclipseLauncherParams::default();
     let command_line_args: Vec<String> = std::env::args().collect();
     let mut ini_file_args = Vec::<String>::new();
     // parse arguments without program location
@@ -43,7 +50,7 @@ fn main() {
 
     // TODO: handle errors here!
     // Determine the full pathname of this program.
-    let exe_path = get_exe_path().unwrap();
+    let exe_path = get_exe_path().map_err(|_| "Determining the program location failed")?;
     // read ini, only set params not already defined by program arguments
     if let Ok(ini_file_lines) = read_ini(&params.launcher_ini, &exe_path) {
         // we strip vmargs off (since the original launcher had this behavior, 
@@ -63,13 +70,11 @@ fn main() {
     // TODO: Root check on Mac OS
 
     // load and promt msg on failure
-    let result = load_lib_and_run(&params, &command_line_args, &ini_file_args, &exe_path);
-    // TODO: proper error handling, if !params.suppress_errors
-    result.unwrap();
+    load_lib_and_run(&params, &command_line_args, &ini_file_args, &exe_path)
 }
 
 fn load_lib_and_run(params: &EclipseLauncherParams, command_line_args : &[String], ini_file_args: &[String], exe_path: &Path) -> Result<(),String> {
-    let exe_parent = exe_path.parent().ok_or_else(|| "Parent dir of executable not found".to_string())?;
+    let exe_parent = exe_path.parent().ok_or_else(|| "Parent dir of program not found".to_string())?;
     // Find the eclipse library, load and initalize callable API
     let lib_path = find_library(&params.eclipse_library, exe_parent)?;
     let lib = load_library(&lib_path)?;
