@@ -95,7 +95,7 @@ where
 /// The path to the library, needed as paramter, can be detected
 /// using the `find_library` function.
 pub fn load_library(lib_path: &Path) -> Result<Library, String> {
-	Library::open(lib_path).map_err(|_| "Could not load library".into())
+	Library::open(lib_path).map_err(|_| format!("Could not load library from {}",lib_path.display()))
 }
 
 /// Looks for the companion library to the executable in the `library_dir`
@@ -106,7 +106,15 @@ pub fn load_library(lib_path: &Path) -> Result<Library, String> {
 /// library in there.
 pub fn find_library(library_dir: &Option<String>, program_dir: &Path) -> Result<PathBuf, String> {
 	if let Some(library_location) = library_dir {
-		let lib_dir_path = Path::new(library_location);
+		let library_loc = if cfg!(windows) {
+			// usually mixing \ and / do not matter for windows,
+			// but appearently when joining a conconicalized path with
+			// a path containing / does 
+			library_location.replace('/', "\\")
+		} else {
+			library_location.to_string()
+		};
+		let lib_dir_path = Path::new(&library_loc);
 		let lib_dir_path = check_path(&lib_dir_path, program_dir, true);
 		let result_path = if lib_dir_path.as_path().is_dir() {
 			// directory, find the highest version eclipse_* library

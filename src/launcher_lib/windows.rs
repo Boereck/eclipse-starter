@@ -4,6 +4,7 @@ use dlopen::symbor::{Library, SymBorApi, Symbol};
 use dlopen_derive::*;
 use std::marker::PhantomData;
 use std::os::raw::c_int;
+use crate::path_util::strip_unc_prefix;
 
 #[derive(SymBorApi)]
 struct EclipseLauncherLibWin<'a> {
@@ -85,7 +86,7 @@ impl<'a> InitialArgs<'a> for SetInitialArgsParams<'a> {
 		let args_vec_nativestr_param = vec_to_native_string(&args_vec_vec_u16_param);
 		let args_ptr_nativestr_param = args_vec_nativestr_param.as_ptr();
 
-		let library_vec_u16_param = str_to_utf16(library);
+		let library_vec_u16_param = str_to_utf16(strip_unc_prefix(library));
 		let library_native_str_param: NativeString = library_vec_u16_param.as_ptr();
 		Self {
 			arg_count: args.len() as c_int,

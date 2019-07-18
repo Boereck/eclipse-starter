@@ -1,9 +1,10 @@
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use std::io;
 use crate::path_util::*;
 
 
-// It seems there is no constant for paths separator in 
+// It seems there is no constant for paths separator in the rust standard library,
+// so we define this character for ourselves.
 
 #[cfg(windows)]
 const PATHS_SEPARATOR: char = ';';
@@ -33,20 +34,18 @@ pub fn get_exe_path() -> Result<PathBuf,io::Error> {
 }
 
 fn find_program(path: &PathBuf) -> Option<PathBuf> {
-    let path = if path.is_absolute() {
+    let path = if path.is_absolute() || has_parent(path) {
         path.to_path_buf()
-    } else if has_parent(path) {
-        std::fs::canonicalize(path).ok()?
     } else {
-        let path_str = path.to_str()?;
-        search_on_path_env(path_str)?
+        search_on_path_env(path)?
     };
-    Some(path)
+	// if path is relative we make it absolute,
+	// if path contains symlinks, they alre also neatly resolved
+    std::fs::canonicalize(path).ok()
 }
 
-fn search_on_path_env(path: &str) -> Option<PathBuf> {
+fn search_on_path_env(path: &Path) -> Option<PathBuf> {
     let path_env = std::env::var("PATH").ok()?;
-    
 	// test for every path `prefix` in the PATH environment variable
 	// if the concatenation `prefix/path` exists and if so, return
 	// the resulting path.

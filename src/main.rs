@@ -19,6 +19,7 @@ use params::EclipseLauncherParams;
 use unicode_segmentation::UnicodeSegmentation;
 use launcher_lib::{find_library, load_library, new_launcher, EclipseLauncher};
 use exe_util::get_exe_path;
+use path_util::strip_unc_prefix;
 
 
 // Arguments
@@ -32,19 +33,26 @@ const VMARGS_ARG: &str = "-vmargs";
 
 
 fn main() {
-	let result = fallible_main();
-    // TODO: proper error handling, if !params.suppress_errors
-    result.unwrap();
+	let mut params = EclipseLauncherParams::default();
+	let result = fallible_main(&mut params);
+	if let Err(ref s) = &result {
+		if params.suppress_errors {
+    		// TODO: proper UI error handling
+		} else {
+			eprintln!("{}\nTechnical message:", s);
+			result.unwrap();
+		}
+	}
 }
 
 #[inline]
-fn fallible_main() -> Result<(),String> {
-	let mut params = EclipseLauncherParams::default();
+fn fallible_main(params: &mut EclipseLauncherParams) -> Result<(),String> {
+	
     let command_line_args: Vec<String> = std::env::args().collect();
     let mut ini_file_args = Vec::<String>::new();
     // parse arguments without program location
     parse_arguments(
-        &mut params,
+        params,
         command_line_args.iter().map(String::as_str).skip(1),
     );
 
@@ -58,7 +66,7 @@ fn fallible_main() -> Result<(),String> {
         let ini_lines_no_vmargs = ini_file_lines.take_while(|s| s != VMARGS_ARG);
         // store ini lines in vector for later usage
         ini_file_args.extend(ini_lines_no_vmargs);
-        parse_arguments(&mut params, ini_file_args.iter().map(String::as_str));
+        parse_arguments(params, ini_file_args.iter().map(String::as_str));
     }
 
     // get default name if not yet set
@@ -99,7 +107,7 @@ fn merge_parameters<'a>(exe_path: &'a str, ini_file_args: &'a [String], command_
     let mut result : Vec<&'a str> = Vec::new();
     let exe_path_param = if cfg!(windows) {
         // TODO: if library supports long path names, we don't have to strip
-        exe_path.trim_start_matches(r"\\?\")
+        strip_unc_prefix(exe_path)
     } else {
         exe_path
     };
