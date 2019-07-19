@@ -105,9 +105,9 @@ struct Version {
 }
 
 /// Tries to parse the given `file_name`, assuming that the name contains the
-/// pattern "_major.minor.patch.qualifier" where all components are strings of digits,
-/// and the ".minor.patch.qualifier" part is optional. The information is stored in
-/// a `Version` value and returned.
+/// pattern "_major.minor.patch.qualifier" where all components, except for qualifier 
+/// are sequences of digits, and the ".minor.patch.qualifier" part is optional. 
+/// The information is stored in a `Version` value and returned.
 fn get_version(file_name: &str) -> Version {
     lazy_static! {
         /// Regex matching "_major.minor.patch.qualifier" where the part after mayor is optional

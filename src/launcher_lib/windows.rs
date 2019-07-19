@@ -30,11 +30,11 @@ struct EclipseLauncherLibWin<'a> {
 	pub set_initial_args: Symbol<'a, SetInitialArgs>,
 }
 
-pub(super) struct EclipseLauncherWin<'a> {
+pub(super) struct EclipseLauncherOs<'a> {
 	lib_api: EclipseLauncherLibWin<'a>,
 }
 
-impl<'a, 'b> EclipseLauncher<'a, 'b> for EclipseLauncherWin<'a>
+impl<'a, 'b> EclipseLauncher<'a, 'b> for EclipseLauncherOs<'a>
 where
 	'b: 'a,
 {

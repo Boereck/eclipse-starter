@@ -15,7 +15,9 @@
 //! This module is the entrypoint to the eclipse launcher executable.
 //! 
 
-//#![windows_subsystem = "windows"]
+// Turn on/of console creation on windows based on "win_console" feature
+#![cfg_attr(all(target_os ="windows", feature = "win_console"), windows_subsystem = "console")]
+#![cfg_attr(all(target_os ="windows", not(feature = "win_console")), windows_subsystem = "windows")]
 
 mod arg_parser;
 mod ini_reader;

@@ -30,11 +30,11 @@ struct EclipseLauncherLibApi<'a> {
 	pub set_initial_args: Symbol<'a, SetInitialArgs>,
 }
 
-pub struct EclipseLauncherNix<'a> {
+pub struct EclipseLauncherOs<'a> {
 	lib_api: EclipseLauncherLibApi<'a>,
 }
 
-impl<'a,'b> EclipseLauncher<'a,'b> for EclipseLauncherNix<'a> 
+impl<'a,'b> EclipseLauncher<'a,'b> for EclipseLauncherOs<'a> 
 	where 'b: 'a {
 	type InitialArgsParams = SetInitialArgsParams<'b>;
 	

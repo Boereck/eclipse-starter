@@ -20,29 +20,20 @@
 //!
 //! The `EclipseLauncher` implementation will map Rust types to native types passed
 //! via the C ABI of the native library.
-#[cfg(windows)]
-mod windows;
 
-#[cfg(not(windows))]
-mod unix;
+
+#[cfg_attr(not(windows), path = "unix.rs")]
+#[cfg_attr(windows, path = "windows.rs")]
+mod os;
 
 mod common;
-
-#[cfg(windows)]
-use self::windows as os;
-#[cfg(windows)]
-use os::EclipseLauncherWin as EclipseLauncherOs;
-
-#[cfg(not(windows))]
-use self::unix as os;
-#[cfg(not(windows))]
-use os::EclipseLauncherNix as EclipseLauncherOs;
 
 use crate::compile_params::*;
 use crate::path_util::*;
 use dlopen::symbor::Library;
 use std::path::Path;
 use std::path::PathBuf;
+use os::EclipseLauncherOs;
 
 static DEFAULT_EQUINOX_STARTUP: &str = "org.eclipse.equinox.launcher";
 
