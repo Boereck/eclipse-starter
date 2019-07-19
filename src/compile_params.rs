@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * Copyright (c) 2019 Fraunhofer FOKUS and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at 
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ * 
+ * Contributors:
+ *     Max Bureck (Fraunhofer FOKUS)
+ *******************************************************************************/
+
 //! This module allows reading parameters regarding OS, Architecture, or windowsing system
 //! that are either set by the caller of the compiler via environment variable,
 //! or detected based on compilation target information given by the compile if not set 
