@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/Boereck/eclipse-starter.svg?branch=master)](https://travis-ci.org/Boereck/eclipse-starter)
+
 # Eclipse-Starter
 
 NOTE: This project is in an early prototyping phase.
