@@ -19,6 +19,7 @@ use std::os::raw::c_int;
 use super::{EclipseLauncher, InitialArgs};
 use super::common::{RunMethod, SetInitialArgs, NativeString};
 use std::ffi::CString;
+use crate::errors::LauncherError;
 
 #[derive(SymBorApi)]
 struct EclipseLauncherLibApi<'a> {
@@ -38,15 +39,18 @@ impl<'a,'b> EclipseLauncher<'a,'b> for EclipseLauncherOs<'a>
 	where 'b: 'a {
 	type InitialArgsParams = SetInitialArgsParams<'b>;
 	
-	fn new(lib: &'a Library) -> Result<Self, String>
+	fn new(lib: &'a Library) -> Result<Self, LauncherError>
 	{
 		Ok(Self {
 			lib_api: unsafe { EclipseLauncherLibApi::load(lib) }
-				.map_err(|_| "Could not load symbols")?,
+				.map_err(|_| {
+                    let msg = "There was a problem loading the shared library and finding the entry point.";
+                    LauncherError::LibraryLookupError(msg.into())
+                 })?,
 		})
 	}
 
-	fn run<S: AsRef<str>>(&self, args: &[S], vm_args: &[S]) -> Result<(), String> {
+	fn run<S: AsRef<str>>(&self, args: &[S], vm_args: &[S]) -> Result<(), LauncherError> {
 		let count_args = args.len() as c_int;
 
 		// convert args to native types
@@ -62,12 +66,10 @@ impl<'a,'b> EclipseLauncher<'a,'b> for EclipseLauncherOs<'a>
 		let vm_args_ptr_nativestring = vm_args_vec_nativestring.as_ptr();
 		unsafe {
 			let result = (self.lib_api.run)(count_args, args_ptr_nativestring, vm_args_ptr_nativestring);
-			if result == 0 {
-				Ok(())
-			} else {
-				// TODO: handle error codes?
-				Err("TODO: something went wrong!".into())
-			}
+			match result {
+                0 => Ok(()),
+                i => Err(LauncherError::RunError("Error calling run on the launcher library".into(), i))
+            }
 		}
 	}
 

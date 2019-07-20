@@ -19,6 +19,7 @@ use dlopen_derive::*;
 use std::marker::PhantomData;
 use std::os::raw::c_int;
 use crate::path_util::strip_unc_prefix;
+use crate::errors::LauncherError;
 
 #[derive(SymBorApi)]
 struct EclipseLauncherLibWin<'a> {
@@ -40,14 +41,17 @@ where
 {
 	type InitialArgsParams = SetInitialArgsParams<'b>;
 
-	fn new(lib: &'a Library) -> Result<Self, String> {
+	fn new(lib: &'a Library) -> Result<Self, LauncherError> {
 		Ok(Self {
 			lib_api: unsafe { EclipseLauncherLibWin::load(lib) }
-				.map_err(|_| "Could not load symbols")?,
+				.map_err(|_| {
+                    let msg = "There was a problem loading the shared library and finding the entry point.";
+                    LauncherError::LibraryLookupError(msg.into())
+                 })?,
 		})
 	}
 
-	fn run<S: AsRef<str>>(&self, args: &[S], vm_args: &[S]) -> Result<(), String> {
+	fn run<S: AsRef<str>>(&self, args: &[S], vm_args: &[S]) -> Result<(), LauncherError> {
 		// Convert parameters
 		let utf16_args = str_slice_to_widechar_vec(args);
 		let count_args: c_int = utf16_args.len() as c_int;
@@ -61,12 +65,10 @@ where
 		let vm_args_native = vm_args_ptr_vec.as_ptr();
 		unsafe {
 			let result = (self.lib_api.run)(count_args, args_native, vm_args_native);
-			if result == 0 {
-				Ok(())
-			} else {
-				// TODO: handle error codes?
-				Err("TODO: something went wrong!".into())
-			}
+            match result {
+                0 => Ok(()),
+                i => Err(LauncherError::RunError("Error calling run on the launcher library".into(), i))
+            }
 		}
 	}
 

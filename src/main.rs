@@ -26,6 +26,7 @@ mod launcher_lib;
 mod exe_util;
 mod path_util;
 mod compile_params;
+mod errors;
 
 use std::path::Path;
 use arg_parser::*;
@@ -35,6 +36,7 @@ use unicode_segmentation::UnicodeSegmentation;
 use launcher_lib::{find_library, load_library, new_launcher, EclipseLauncher};
 use exe_util::get_exe_path;
 use path_util::strip_unc_prefix;
+use errors::LauncherError;
 
 
 // Arguments
@@ -50,18 +52,24 @@ const VMARGS_ARG: &str = "-vmargs";
 fn main() {
 	let mut params = EclipseLauncherParams::default();
 	let result = fallible_main(&mut params);
-	if let Err(ref s) = &result {
+	if let Err(ref err) = &result {
 		if params.suppress_errors {
     		// TODO: proper UI error handling
 		} else {
-			eprintln!("{}\nTechnical message:", s);
-			result.unwrap();
+			eprintln!("{}\nDetails: \n{:#?}", err, err);
+            let err_code = match err {
+                LauncherError::LibraryLookupError(_) => 1,
+                LauncherError::SecurityError(_) => 2,
+                LauncherError::GeneralError(_) => 3,
+                LauncherError::RunError(_,i) => *i as i32,
+            };
+            std::process::exit(err_code);
 		}
 	}
 }
 
 #[inline]
-fn fallible_main(params: &mut EclipseLauncherParams) -> Result<(),String> {
+fn fallible_main(params: &mut EclipseLauncherParams) -> Result<(),LauncherError> {
 	
     let command_line_args: Vec<String> = std::env::args().collect();
     let mut ini_file_args = Vec::<String>::new();
@@ -71,7 +79,6 @@ fn fallible_main(params: &mut EclipseLauncherParams) -> Result<(),String> {
         command_line_args.iter().map(String::as_str).skip(1),
     );
 
-    // TODO: handle errors here!
     // Determine the full pathname of this program.
     let exe_path = get_exe_path().map_err(|_| "Determining the program location failed")?;
     // read ini, only set params not already defined by program arguments
@@ -96,7 +103,7 @@ fn fallible_main(params: &mut EclipseLauncherParams) -> Result<(),String> {
     load_lib_and_run(&params, &command_line_args, &ini_file_args, &exe_path)
 }
 
-fn load_lib_and_run(params: &EclipseLauncherParams, command_line_args : &[String], ini_file_args: &[String], exe_path: &Path) -> Result<(),String> {
+fn load_lib_and_run(params: &EclipseLauncherParams, command_line_args : &[String], ini_file_args: &[String], exe_path: &Path) -> Result<(),LauncherError> {
     let exe_parent = exe_path.parent().ok_or_else(|| "Parent dir of program not found".to_string())?;
     // Find the eclipse library, load and initalize callable API
     let lib_path = find_library(&params.eclipse_library, exe_parent)?;
