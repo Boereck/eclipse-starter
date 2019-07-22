@@ -12,7 +12,10 @@
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
 
-use super::common::{NativeString, RunMethod, SetInitialArgs};
+//! This module contains Windows specific functionality to load the launcher
+//! companion library and call methods on it.
+
+use super::common::{NativeString, RunMethod, SetInitialArgs, MSG_LOAD_LIB_SYMBOL_RESOLVE_ERROR, MSG_ERROR_CALLING_RUN};
 use super::{EclipseLauncher, InitialArgs};
 use dlopen::symbor::{Library, SymBorApi, Symbol};
 use dlopen_derive::*;
@@ -45,7 +48,7 @@ where
 		Ok(Self {
 			lib_api: unsafe { EclipseLauncherLibWin::load(lib) }
 				.map_err(|_| {
-                    let msg = "There was a problem loading the shared library and finding the entry point.";
+                    let msg = MSG_LOAD_LIB_SYMBOL_RESOLVE_ERROR;
                     LauncherError::LibraryLookupError(msg.into())
                  })?,
 		})
@@ -67,7 +70,7 @@ where
 			let result = (self.lib_api.run)(count_args, args_native, vm_args_native);
             match result {
                 0 => Ok(()),
-                i => Err(LauncherError::RunError("Error calling run on the launcher library".into(), i))
+                i => Err(LauncherError::RunError(MSG_ERROR_CALLING_RUN.into(), i))
             }
 		}
 	}

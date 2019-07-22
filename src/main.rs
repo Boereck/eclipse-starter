@@ -13,7 +13,7 @@
  *******************************************************************************/
 
 //! This module is the entrypoint to the eclipse launcher executable.
-//! 
+//! See the `main()` method, for the entrypoint for the executable.
 
 // Turn on/of console creation on windows based on "win_console" feature
 #![cfg_attr(all(target_os ="windows", feature = "win_console"), windows_subsystem = "console")]
@@ -38,8 +38,14 @@ use exe_util::get_exe_path;
 use path_util::strip_unc_prefix;
 use errors::LauncherError;
 
+// Error messages
 
-// Arguments
+static MSG_EXE_LOCATION_NOT_FOUND: &str = "Determining the launcher location failed";
+static MSG_EXE_PARENT_NOT_FOUND: &str = "Parent directory of launcher not found";
+static MSG_LIB_PATH_CONVERSION_ERR: &str = "Converting path name of companion library failed";
+static MSG_EXE_PATH_CONVERSION_ERR: &str = "Converting path name of launcher failed";
+
+// Possible launcher executable arguments
 
 const NAME_ARG: &str = "-name";
 const LAUNCHER_LIB_ARG: &str = "--launcher.library";
@@ -80,7 +86,7 @@ fn fallible_main(params: &mut EclipseLauncherParams) -> Result<(),LauncherError>
     );
 
     // Determine the full pathname of this program.
-    let exe_path = get_exe_path().map_err(|_| "Determining the program location failed")?;
+    let exe_path = get_exe_path().map_err(|_| MSG_EXE_LOCATION_NOT_FOUND)?;
     // read ini, only set params not already defined by program arguments
     if let Ok(ini_file_lines) = read_ini(&params.launcher_ini, &exe_path) {
         // we strip vmargs off (since the original launcher had this behavior, 
@@ -104,19 +110,19 @@ fn fallible_main(params: &mut EclipseLauncherParams) -> Result<(),LauncherError>
 }
 
 fn load_lib_and_run(params: &EclipseLauncherParams, command_line_args : &[String], ini_file_args: &[String], exe_path: &Path) -> Result<(),LauncherError> {
-    let exe_parent = exe_path.parent().ok_or_else(|| "Parent dir of program not found".to_string())?;
+    let exe_parent = exe_path.parent().ok_or_else(|| MSG_EXE_PARENT_NOT_FOUND.to_string())?;
     // Find the eclipse library, load and initalize callable API
     let lib_path = find_library(&params.eclipse_library, exe_parent)?;
     let lib = load_library(&lib_path)?;
     let lib_api = new_launcher(&lib)?;
     
     // If no VM args are set use empty slice
-    let lib_path_str = &lib_path.to_str().ok_or_else(|| "Converting library path name failed".to_string())?;
+    let lib_path_str = &lib_path.to_str().ok_or_else(|| MSG_LIB_PATH_CONVERSION_ERR.to_string())?;
     let initial_args_params = lib_api.new_initial_args(command_line_args, lib_path_str);
     lib_api.set_initial_args(&initial_args_params)?;
 
     // call run on the library
-    let exe_path_str = exe_path.to_str().ok_or_else(|| "Converting exe path name failed".to_string())?;
+    let exe_path_str = exe_path.to_str().ok_or_else(|| MSG_EXE_PATH_CONVERSION_ERR.to_string())?;
     let merged_args: Vec<&str> = merge_parameters(exe_path_str, ini_file_args, command_line_args);
     let vm_args : Vec<&str> = params.vm_args.iter().flatten().map(String::as_str).collect();
     lib_api.run(&merged_args, &vm_args)

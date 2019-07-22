@@ -12,12 +12,15 @@
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
 
+//! This module contains *nix (Linux / MacOS) specific functionality to load the launcher
+//! companion library and call methods on it.
+
 use dlopen::symbor::{Library, SymBorApi, Symbol};
 use dlopen_derive::*;
 use std::marker::PhantomData;
 use std::os::raw::c_int;
 use super::{EclipseLauncher, InitialArgs};
-use super::common::{RunMethod, SetInitialArgs, NativeString};
+use super::common::{RunMethod, SetInitialArgs, NativeString, MSG_LOAD_LIB_SYMBOL_RESOLVE_ERROR, MSG_ERROR_CALLING_RUN};
 use std::ffi::CString;
 use crate::errors::LauncherError;
 
@@ -44,7 +47,7 @@ impl<'a,'b> EclipseLauncher<'a,'b> for EclipseLauncherOs<'a>
 		Ok(Self {
 			lib_api: unsafe { EclipseLauncherLibApi::load(lib) }
 				.map_err(|_| {
-                    let msg = "There was a problem loading the shared library and finding the entry point.";
+                    let msg = MSG_LOAD_LIB_SYMBOL_RESOLVE_ERROR;
                     LauncherError::LibraryLookupError(msg.into())
                  })?,
 		})
@@ -68,7 +71,7 @@ impl<'a,'b> EclipseLauncher<'a,'b> for EclipseLauncherOs<'a>
 			let result = (self.lib_api.run)(count_args, args_ptr_nativestring, vm_args_ptr_nativestring);
 			match result {
                 0 => Ok(()),
-                i => Err(LauncherError::RunError("Error calling run on the launcher library".into(), i))
+                i => Err(LauncherError::RunError(MSG_ERROR_CALLING_RUN.into(), i))
             }
 		}
 	}

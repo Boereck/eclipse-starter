@@ -12,10 +12,20 @@
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
 
-use std::os::raw::c_int;
+//! This module holds declarations and error messages common for the OS specific
+//! launcher_lib implementations in `crate::launcher_lib::os`, which are located
+//! in `windows.rs` and `unix.rs`.
+
 
 #[cfg(not(windows))]
 use std::os::raw::c_char;
+use std::os::raw::c_int;
+use crate::errors::LauncherError;
+use dlopen::symbor::Library;
+
+
+pub static MSG_LOAD_LIB_SYMBOL_RESOLVE_ERROR:  &str = "There was a problem loading the shared library and finding the entry point.";
+pub static MSG_ERROR_CALLING_RUN:  &str = "Error calling the run function on the launcher library.";
 
 // On Windows we use UTF-16 chars
 #[cfg(windows)]
@@ -26,3 +36,51 @@ pub(super) type NativeString = *const c_char;
 
 pub(super) type RunMethod = unsafe extern "C" fn(c_int, *const NativeString, *const NativeString) -> c_int;
 pub(super) type SetInitialArgs = unsafe extern "C" fn(c_int, *const NativeString, NativeString) -> ();
+
+/// Type holding inital parameters needed to call `EclipseLauncher::set_initial_args`.
+pub trait InitialArgs<'b> {
+    /// Creates a new instance of a concrete `InitialArgs` implementation.
+    /// Note that users of this module shall use the function `EclipseLauncher::new_initial_args`
+    /// to create an instance of `InitialArgs`.
+    fn new<S: AsRef<str>>(args: &'b [S], library: &'b str) -> Self;
+}
+
+/// This trait represents the API surface of the launcers companion dynamic library.
+/// To craete an instance of this type, use function `new_launcher`.
+pub trait EclipseLauncher<'a, 'b>: Sized
+where
+    'b: 'a,
+{
+    type InitialArgsParams: InitialArgs<'b>;
+
+    /// Creates a new instance of a concrete `EclipseLauncher` implementation.
+    /// Note that users of this module shall use the function `new_launcher`
+    /// to craete an instance of `EclipseLauncher`.
+    fn new(lib: &'a Library) -> Result<Self, LauncherError>;
+
+    /// Starts the main application. The caller has to provide the merged
+    /// start parameters (first from config file, followed by arguments from command line)
+    /// without the JVM parameters. The JVM arguments from the command line are
+    /// passed by the `vm_args` parameter.
+    ///
+    /// *Note*: `set_initial_args` has to be called before calling this function.
+    fn run<S: AsRef<str>>(&self, args: &[S], vm_args: &[S]) -> Result<(), LauncherError>;
+
+    /// Creates a `InitialArgsParams` value holding the information about
+    /// the initial command line arguments `args` and the file path to the
+    /// dynamic companion library via `library` parameter.
+    #[inline]
+    fn new_initial_args<S: AsRef<str>>(
+        &self,
+        args: &'b [S],
+        library: &'b str,
+    ) -> Self::InitialArgsParams {
+        Self::InitialArgsParams::new(args, library)
+    }
+
+    /// Sets the initial command line arguments and the location of the
+    /// companion dynamic library. The `params` parameter value has to be created
+    /// by the caller via the `new_initial_args` function.
+    /// This function needs to be called before calling the `run` function.
+    fn set_initial_args(&self, params: &Self::InitialArgsParams) -> Result<(), String>;
+}

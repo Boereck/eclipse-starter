@@ -24,7 +24,6 @@
 #[cfg_attr(not(windows), path = "unix.rs")]
 #[cfg_attr(windows, path = "windows.rs")]
 mod os;
-
 mod common;
 
 use crate::compile_params::*;
@@ -34,56 +33,12 @@ use dlopen::symbor::Library;
 use os::EclipseLauncherOs;
 use std::path::Path;
 use std::path::PathBuf;
+pub use common::{EclipseLauncher, InitialArgs};
 
 static DEFAULT_EQUINOX_STARTUP: &str = "org.eclipse.equinox.launcher";
-
-/// Type holding inital parameters needed to call `EclipseLauncher::set_initial_args`.
-pub trait InitialArgs<'b> {
-    /// Creates a new instance of a concrete `InitialArgs` implementation.
-    /// Note that users of this module shall use the function `EclipseLauncher::new_initial_args`
-    /// to create an instance of `InitialArgs`.
-    fn new<S: AsRef<str>>(args: &'b [S], library: &'b str) -> Self;
-}
-
-/// This trait represents the API surface of the launcers companion dynamic library.
-/// To craete an instance of this type, use function `new_launcher`.
-pub trait EclipseLauncher<'a, 'b>: Sized
-where
-    'b: 'a,
-{
-    type InitialArgsParams: InitialArgs<'b>;
-
-    /// Creates a new instance of a concrete `EclipseLauncher` implementation.
-    /// Note that users of this module shall use the function `new_launcher`
-    /// to craete an instance of `EclipseLauncher`.
-    fn new(lib: &'a Library) -> Result<Self, LauncherError>;
-
-    /// Starts the main application. The caller has to provide the merged
-    /// start parameters (first from config file, followed by arguments from command line)
-    /// without the JVM parameters. The JVM arguments from the command line are
-    /// passed by the `vm_args` parameter.
-    ///
-    /// *Note*: `set_initial_args` has to be called before calling this function.
-    fn run<S: AsRef<str>>(&self, args: &[S], vm_args: &[S]) -> Result<(), LauncherError>;
-
-    /// Creates a `InitialArgsParams` value holding the information about
-    /// the initial command line arguments `args` and the file path to the
-    /// dynamic companion library via `library` parameter.
-    #[inline]
-    fn new_initial_args<S: AsRef<str>>(
-        &self,
-        args: &'b [S],
-        library: &'b str,
-    ) -> Self::InitialArgsParams {
-        Self::InitialArgsParams::new(args, library)
-    }
-
-    /// Sets the initial command line arguments and the location of the
-    /// companion dynamic library. The `params` parameter value has to be created
-    /// by the caller via the `new_initial_args` function.
-    /// This function needs to be called before calling the `run` function.
-    fn set_initial_args(&self, params: &Self::InitialArgsParams) -> Result<(), String>;
-}
+static MSG_UNABLE_LOCATE_LIBRARY: &str = "The executable launcher was unable to locate its companion shared library from";
+static MSG_LIBRARY_NOT_FOUND: &str = "Launcher companion library not found.";
+static MSG_PLUGIN_NOT_FOUND: &str = "Launcher plugin not found in path";
 
 /// Creates an instance of `EclipseLauncher` for the given `library`, which allows to
 /// call functions on the library.
@@ -101,7 +56,8 @@ where
 pub fn load_library(lib_path: &Path) -> Result<Library, LauncherError> {
     Library::open(lib_path).map_err(|_| {
         let msg = format!(
-            "The executable launcher was unable to locate its companion shared library from {}",
+            "{} {}",
+            MSG_UNABLE_LOCATE_LIBRARY,
             lib_path.display()
         );
         LauncherError::LibraryLookupError(msg)
@@ -128,7 +84,7 @@ pub fn find_library(library_dir: &Option<String>, program_dir: &Path) -> Result<
         let lib_dir_path = check_path(&lib_dir_path, program_dir, true);
         let result_path = if lib_dir_path.as_path().is_dir() {
             // directory, find the highest version eclipse_* library
-            find_file(&lib_dir_path, "eclipse").ok_or_else(|| "library not found")?
+            find_file(&lib_dir_path, "eclipse").ok_or_else(|| MSG_LIBRARY_NOT_FOUND)?
         } else {
             // file, return it
             lib_dir_path
@@ -157,11 +113,11 @@ pub fn find_library(library_dir: &Option<String>, program_dir: &Path) -> Result<
         // find equinox.launcher plugin directory containing the companion dynamic library
         let plugin_dir_opt = find_file(&plugin_path, &fragment);
         let plugin_dir =
-            plugin_dir_opt.ok_or_else(|| format!("Plugin not found in path {:?}", &plugin_path))?;
+            plugin_dir_opt.ok_or_else(|| format!("{} {:?}.", MSG_PLUGIN_NOT_FOUND, &plugin_path))?;
 
         // Find companion dynamic library in plugins folder
         find_file(&plugin_dir, "eclipse")
             .filter(|path| path.is_file())
-            .ok_or_else(|| format!("Companion library not found in path {:?}", &plugin_dir))
+            .ok_or_else(|| format!("{} {:?}.", MSG_UNABLE_LOCATE_LIBRARY, &plugin_dir))
     }
 }

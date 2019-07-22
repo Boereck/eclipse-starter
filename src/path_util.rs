@@ -11,6 +11,10 @@
  * Contributors:
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
+
+//! This module contains methods for looking up file-paths and checking properties
+//! on file-paths.
+
 use lazy_static::lazy_static;
 use regex::{Match, Regex};
 use std::fs::DirEntry;

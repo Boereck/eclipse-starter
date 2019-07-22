@@ -12,12 +12,22 @@
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
 
+//! This module provides the public method `read_ini`, which allows reading the
+//! launcher configuration file, which is either located relative to the executable,
+//! or on a user specified location.
+
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::{BufReader, Error};
 use std::path::{Path, PathBuf};
 use unicode_segmentation::UnicodeSegmentation;
 
+/// Reads the ini config file either from a user specified location,
+/// if `user_defined_config` is `Some`, or otherwise from a location relative 
+/// to the executable. The path to the executable is passed via the parameter
+/// `exe_path`. If the operation succeeds, the returned result will contain
+/// an iterator over the lines of the config file. If the operation fails, the
+/// result will contain an IO error.
 pub fn read_ini(
     user_defined_config: &Option<String>,
     exe_path: &PathBuf,

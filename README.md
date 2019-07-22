@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/Boereck/eclipse-starter.svg?branch=master)](https://travis-ci.org/Boereck/eclipse-starter)
+![License EPL-2.0](https://img.shields.io/github/license/Boereck/eclipse-starter.svg)
 
 # Eclipse-Starter
 

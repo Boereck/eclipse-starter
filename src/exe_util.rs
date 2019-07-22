@@ -12,6 +12,9 @@
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
 
+//! This module provides the public function `get_exe_path()` which provides the 
+//! Path to the current 
+
 use std::path::{PathBuf, Path};
 use std::io;
 use crate::path_util::*;

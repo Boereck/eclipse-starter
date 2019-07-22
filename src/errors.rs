@@ -2,6 +2,10 @@ use core::fmt::Display;
 use std::os::raw::c_int;
 use std::fmt;
 
+///! This module holds the error type used in this crate.
+
+/// Error catecories to occur during launching. This error type
+/// will be used to compute the return code for the application.
 #[derive(Debug)]
 pub enum LauncherError {
     LibraryLookupError(String),
