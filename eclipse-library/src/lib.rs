@@ -1,4 +1,7 @@
 use std::os::raw::c_int;
+
+#[cfg(not(windows))]
+use std::os::raw::c_char;
 //use std::ffi::OsString;
 //use std::os::windows::prelude::*;
 
