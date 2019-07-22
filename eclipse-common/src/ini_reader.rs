@@ -92,14 +92,21 @@ fn adjust_macos_ini_path(ini_path: &Path) -> Option<PathBuf> {
     Some(result)
 }
 
+/// Detects if the launcher name is a for a Windows executable
+/// starting a console, and returns an adjusted ini file name if so.
+/// The criterion for detection is, that the file base name (without
+/// file extension) ends with the character 'c'. This trailing character will
+/// be stripped off the complete file name.
 fn adjust_console_file_name(ini_path: &Path) -> Option<String> {
     let file_stem = ini_path.file_stem()?.to_str()?;
     let file_ext = ini_path.extension()?.to_str()?;
     let extended = true;
+    // get last unicode character cluster
     let graphemes = file_stem.graphemes(extended);
     let (index, last_char) = graphemes.enumerate().last()?;
     if last_char == "c" {
         // get all elements except for last character
+        // and add file extension back
         let mut stripped = file_stem
             .graphemes(extended)
             .take(index)

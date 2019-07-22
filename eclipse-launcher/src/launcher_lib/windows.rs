@@ -15,13 +15,12 @@
 //! This module contains Windows specific functionality to load the launcher
 //! companion library and call methods on it.
 
-use super::common::{NativeString, RunMethod, SetInitialArgs, MSG_LOAD_LIB_SYMBOL_RESOLVE_ERROR, MSG_ERROR_CALLING_RUN};
-use super::{EclipseLauncher, InitialArgs};
+use eclipse_common::path_util::strip_unc_prefix;
+use super::common::{EclipseLauncher, InitialArgs, NativeString, RunMethod, SetInitialArgs, MSG_LOAD_LIB_SYMBOL_RESOLVE_ERROR, MSG_ERROR_CALLING_RUN};
 use dlopen::symbor::{Library, SymBorApi, Symbol};
 use dlopen_derive::*;
 use std::marker::PhantomData;
 use std::os::raw::c_int;
-use crate::path_util::strip_unc_prefix;
 use crate::errors::LauncherError;
 
 #[derive(SymBorApi)]

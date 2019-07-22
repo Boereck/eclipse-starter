@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.corrosion.run.CargoRunDelegate">
 <stringAttribute key="ARGUMENTS" value=""/>
-<stringAttribute key="OPTIONS" value=""/>
+<stringAttribute key="OPTIONS" value="--bin eclipse"/>
 <stringAttribute key="PROJECT" value="eclipse-starter"/>
 <stringAttribute key="WORKING_DIRECTORY" value="eclipse-starter"/>
 <mapAttribute key="org.eclipse.debug.core.environmentVariables">

@@ -26,9 +26,9 @@
 mod os;
 mod common;
 
+use eclipse_common::path_util::*;
 use crate::compile_params::*;
 use crate::errors::LauncherError;
-use crate::path_util::*;
 use dlopen::symbor::Library;
 use os::EclipseLauncherOs;
 use std::path::Path;

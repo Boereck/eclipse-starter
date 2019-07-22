@@ -19,8 +19,7 @@ use dlopen::symbor::{Library, SymBorApi, Symbol};
 use dlopen_derive::*;
 use std::marker::PhantomData;
 use std::os::raw::c_int;
-use super::{EclipseLauncher, InitialArgs};
-use super::common::{RunMethod, SetInitialArgs, NativeString, MSG_LOAD_LIB_SYMBOL_RESOLVE_ERROR, MSG_ERROR_CALLING_RUN};
+use super::common::{EclipseLauncher, InitialArgs, RunMethod, SetInitialArgs, NativeString, MSG_LOAD_LIB_SYMBOL_RESOLVE_ERROR, MSG_ERROR_CALLING_RUN};
 use std::ffi::CString;
 use crate::errors::LauncherError;
 

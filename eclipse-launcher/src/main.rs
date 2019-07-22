@@ -25,22 +25,19 @@
     windows_subsystem = "windows"
 )]
 
-mod arg_parser;
 mod compile_params;
 mod errors;
 mod exe_util;
-mod ini_reader;
 mod launcher_lib;
 mod params;
-mod path_util;
 
-use arg_parser::*;
+use eclipse_common::arg_parser::*;
+use eclipse_common::ini_reader::*;
+use eclipse_common::path_util::strip_unc_prefix;
 use errors::LauncherError;
 use exe_util::get_exe_path;
-use ini_reader::*;
 use launcher_lib::{find_library, load_library, new_launcher, EclipseLauncher};
 use params::EclipseLauncherParams;
-use path_util::strip_unc_prefix;
 use std::path::Path;
 use unicode_segmentation::UnicodeSegmentation;
 

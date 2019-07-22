@@ -19,7 +19,7 @@
 
 use std::path::{PathBuf, Path};
 use std::io;
-use crate::path_util::*;
+use eclipse_common::path_util::*;
 
 
 // It seems there is no constant for paths separator in the rust standard library,
