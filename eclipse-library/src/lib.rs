@@ -1,6 +1,6 @@
 use std::os::raw::c_int;
-use std::ffi::OsString;
-use std::os::windows::prelude::*;
+//use std::ffi::OsString;
+//use std::os::windows::prelude::*;
 
 // On Windows we use UTF-16 chars
 #[cfg(windows)]
@@ -32,12 +32,4 @@ pub unsafe extern fn runW(args_size: c_int, args: *const NativeString, vm_args: 
 
 #[no_mangle]
 pub extern fn setInitialArgsW(args_size: c_int, args: *const NativeString, library: NativeString) -> () {
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
 }
