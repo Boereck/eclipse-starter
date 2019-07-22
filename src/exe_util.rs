@@ -13,7 +13,9 @@
  *******************************************************************************/
 
 //! This module provides the public function `get_exe_path()` which provides the 
-//! Path to the current 
+//! Path to the current executable. The algorithm was ported directly from the 
+//! original C version, it should be investigated if a simple call to `std::fs::canonicalize`
+//! would suffice.
 
 use std::path::{PathBuf, Path};
 use std::io;

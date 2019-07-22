@@ -23,7 +23,7 @@ use std::path::{Path, PathBuf};
 use unicode_segmentation::UnicodeSegmentation;
 
 /// Reads the ini config file either from a user specified location,
-/// if `user_defined_config` is `Some`, or otherwise from a location relative 
+/// if `user_defined_config` is `Some`, or otherwise from a location relative
 /// to the executable. The path to the executable is passed via the parameter
 /// `exe_path`. If the operation succeeds, the returned result will contain
 /// an iterator over the lines of the config file. If the operation fails, the
@@ -100,7 +100,10 @@ fn adjust_console_file_name(ini_path: &Path) -> Option<String> {
     let (index, last_char) = graphemes.enumerate().last()?;
     if last_char == "c" {
         // get all elements except for last character
-        let mut stripped = file_stem.graphemes(extended).take(index).collect::<String>();
+        let mut stripped = file_stem
+            .graphemes(extended)
+            .take(index)
+            .collect::<String>();
         stripped.push('.');
         stripped.push_str(file_ext);
         Some(stripped)

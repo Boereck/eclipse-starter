@@ -3,11 +3,11 @@
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at 
+ * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
@@ -16,27 +16,33 @@
 //! See the `main()` method, for the entrypoint for the executable.
 
 // Turn on/of console creation on windows based on "win_console" feature
-#![cfg_attr(all(target_os ="windows", feature = "win_console"), windows_subsystem = "console")]
-#![cfg_attr(all(target_os ="windows", not(feature = "win_console")), windows_subsystem = "windows")]
+#![cfg_attr(
+    all(target_os = "windows", feature = "win_console"),
+    windows_subsystem = "console"
+)]
+#![cfg_attr(
+    all(target_os = "windows", not(feature = "win_console")),
+    windows_subsystem = "windows"
+)]
 
 mod arg_parser;
-mod ini_reader;
-mod params;
-mod launcher_lib;
-mod exe_util;
-mod path_util;
 mod compile_params;
 mod errors;
+mod exe_util;
+mod ini_reader;
+mod launcher_lib;
+mod params;
+mod path_util;
 
-use std::path::Path;
 use arg_parser::*;
-use ini_reader::*;
-use params::EclipseLauncherParams;
-use unicode_segmentation::UnicodeSegmentation;
-use launcher_lib::{find_library, load_library, new_launcher, EclipseLauncher};
-use exe_util::get_exe_path;
-use path_util::strip_unc_prefix;
 use errors::LauncherError;
+use exe_util::get_exe_path;
+use ini_reader::*;
+use launcher_lib::{find_library, load_library, new_launcher, EclipseLauncher};
+use params::EclipseLauncherParams;
+use path_util::strip_unc_prefix;
+use std::path::Path;
+use unicode_segmentation::UnicodeSegmentation;
 
 // Error messages
 
@@ -54,42 +60,37 @@ const PROTECT_ARG: &str = "-protect";
 const LAUNCHER_INI_ARG: &str = "--launcher.ini";
 const VMARGS_ARG: &str = "-vmargs";
 
-
 fn main() {
-	let mut params = EclipseLauncherParams::default();
-	let result = fallible_main(&mut params);
-	if let Err(ref err) = &result {
-		if params.suppress_errors {
-    		// TODO: proper UI error handling
-		} else {
-			eprintln!("{}\nDetails: \n{:#?}", err, err);
+    let mut params = EclipseLauncherParams::default();
+    let result = fallible_main(&mut params);
+    if let Err(ref err) = &result {
+        if params.suppress_errors {
+            // TODO: proper UI error handling
+        } else {
+            eprintln!("{}\nDetails: \n{:#?}", err, err);
             let err_code = match err {
                 LauncherError::LibraryLookupError(_) => 1,
                 LauncherError::SecurityError(_) => 2,
                 LauncherError::GeneralError(_) => 3,
-                LauncherError::RunError(_,i) => *i as i32,
+                LauncherError::RunError(_, i) => *i as i32,
             };
             std::process::exit(err_code);
-		}
-	}
+        }
+    }
 }
 
 #[inline]
-fn fallible_main(params: &mut EclipseLauncherParams) -> Result<(),LauncherError> {
-	
+fn fallible_main(params: &mut EclipseLauncherParams) -> Result<(), LauncherError> {
     let command_line_args: Vec<String> = std::env::args().collect();
     let mut ini_file_args = Vec::<String>::new();
     // parse arguments without program location
-    parse_arguments(
-        params,
-        command_line_args.iter().map(String::as_str).skip(1),
-    );
+    parse_arguments(params, command_line_args.iter().map(String::as_str).skip(1));
 
     // Determine the full pathname of this program.
     let exe_path = get_exe_path().map_err(|_| MSG_EXE_LOCATION_NOT_FOUND)?;
     // read ini, only set params not already defined by program arguments
     if let Ok(ini_file_lines) = read_ini(&params.launcher_ini, &exe_path) {
-        // we strip vmargs off (since the original launcher had this behavior, 
+        // we strip vmargs off (since the original launcher had this behavior,
         // see eclipseMain.c main calling parseArgs with useVMargs = 0)
         let ini_lines_no_vmargs = ini_file_lines.take_while(|s| s != VMARGS_ARG);
         // store ini lines in vector for later usage
@@ -109,30 +110,49 @@ fn fallible_main(params: &mut EclipseLauncherParams) -> Result<(),LauncherError>
     load_lib_and_run(&params, &command_line_args, &ini_file_args, &exe_path)
 }
 
-fn load_lib_and_run(params: &EclipseLauncherParams, command_line_args : &[String], ini_file_args: &[String], exe_path: &Path) -> Result<(),LauncherError> {
-    let exe_parent = exe_path.parent().ok_or_else(|| MSG_EXE_PARENT_NOT_FOUND.to_string())?;
+fn load_lib_and_run(
+    params: &EclipseLauncherParams,
+    command_line_args: &[String],
+    ini_file_args: &[String],
+    exe_path: &Path,
+) -> Result<(), LauncherError> {
+    let exe_parent = exe_path
+        .parent()
+        .ok_or_else(|| MSG_EXE_PARENT_NOT_FOUND.to_string())?;
     // Find the eclipse library, load and initalize callable API
     let lib_path = find_library(&params.eclipse_library, exe_parent)?;
     let lib = load_library(&lib_path)?;
     let lib_api = new_launcher(&lib)?;
-    
     // If no VM args are set use empty slice
-    let lib_path_str = &lib_path.to_str().ok_or_else(|| MSG_LIB_PATH_CONVERSION_ERR.to_string())?;
+    let lib_path_str = &lib_path
+        .to_str()
+        .ok_or_else(|| MSG_LIB_PATH_CONVERSION_ERR.to_string())?;
     let initial_args_params = lib_api.new_initial_args(command_line_args, lib_path_str);
     lib_api.set_initial_args(&initial_args_params)?;
 
     // call run on the library
-    let exe_path_str = exe_path.to_str().ok_or_else(|| MSG_EXE_PATH_CONVERSION_ERR.to_string())?;
+    let exe_path_str = exe_path
+        .to_str()
+        .ok_or_else(|| MSG_EXE_PATH_CONVERSION_ERR.to_string())?;
     let merged_args: Vec<&str> = merge_parameters(exe_path_str, ini_file_args, command_line_args);
-    let vm_args : Vec<&str> = params.vm_args.iter().flatten().map(String::as_str).collect();
+    let vm_args: Vec<&str> = params
+        .vm_args
+        .iter()
+        .flatten()
+        .map(String::as_str)
+        .collect();
     lib_api.run(&merged_args, &vm_args)
 }
 
 /// Cretes a vector with the value of `exe_path` followed by references
-/// to the elements of `ini_file_args` followed by the elements of 
+/// to the elements of `ini_file_args` followed by the elements of
 /// `command_line_args` (where the first argument is dropped).
-fn merge_parameters<'a>(exe_path: &'a str, ini_file_args: &'a [String], command_line_args : &'a [String]) -> Vec<&'a str> {
-    let mut result : Vec<&'a str> = Vec::new();
+fn merge_parameters<'a>(
+    exe_path: &'a str,
+    ini_file_args: &'a [String],
+    command_line_args: &'a [String],
+) -> Vec<&'a str> {
+    let mut result: Vec<&'a str> = Vec::new();
     let exe_path_param = if cfg!(windows) {
         // TODO: if library supports long path names, we don't have to strip
         strip_unc_prefix(exe_path)
@@ -165,7 +185,10 @@ fn parse_arguments<'a, 'b>(
 
     // Extract parsed parameters and set in `params` if they were found and not already set
     set_if_none(&mut params.name, parse_result.take_option(name));
-    set_if_none(&mut params.eclipse_library, parse_result.take_option(eclipse_library));
+    set_if_none(
+        &mut params.eclipse_library,
+        parse_result.take_option(eclipse_library),
+    );
     params.suppress_errors |= parse_result.take_flag(suppress_errors);
     set_if_none(&mut params.protect, parse_result.take_option(protect));
     set_if_none(

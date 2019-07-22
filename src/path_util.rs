@@ -137,3 +137,6 @@ fn to_u32(m: Option<Match>) -> u32 {
 fn to_string(m: Option<Match>) -> String {
     m.map(|m| m.as_str().to_string()).unwrap_or_default()
 }
+
+
+// TODO: test get_version and comparison between Version values
