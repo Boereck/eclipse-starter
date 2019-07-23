@@ -17,4 +17,6 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install -y windows-sdk-10 ; fi
 
 script:
-  cargo build --release
+  - cargo build test --all
+  - cargo build --release
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then cargo build --manifest-path ./eclipse-launcher/Cargo.toml --features win_console --bin eclipsec ; fi
