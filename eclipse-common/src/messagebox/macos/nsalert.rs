@@ -4,7 +4,7 @@
  * Author: Jang Ryeol (https://github.com/bekker)
  ******************************************************************************************************************/
 
-use cocoa::base::{id, nil};
+use cocoa::base::id;
 use cocoa::foundation::NSString;
 use objc::*;
 

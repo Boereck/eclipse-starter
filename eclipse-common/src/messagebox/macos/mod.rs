@@ -15,8 +15,8 @@
 #[allow(non_snake_case)]
 mod nsalert;
 
-use nsalert::NSAlert;
-use cocoa::base::{id, nil};
+use nsalert::{NSAlert, NSAlertStyle};
+use cocoa::base::nil;
 use cocoa::foundation::NSString;
 
 ///  Display a Message
