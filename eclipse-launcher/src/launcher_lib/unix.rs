@@ -47,7 +47,7 @@ impl<'a,'b> EclipseLauncher<'a,'b> for EclipseLauncherOs<'a>
 			lib_api: unsafe { EclipseLauncherLibApi::load(lib) }
 				.map_err(|_| {
                     let msg = MSG_LOAD_LIB_SYMBOL_RESOLVE_ERROR;
-                    LauncherError::LibraryLookupError(msg.into())
+                    LauncherError::LibraryLookupError(msg.to_string())
                  })?,
 		})
 	}
@@ -70,7 +70,7 @@ impl<'a,'b> EclipseLauncher<'a,'b> for EclipseLauncherOs<'a>
 			let result = (self.lib_api.run)(count_args, args_ptr_nativestring, vm_args_ptr_nativestring);
 			match result {
                 0 => Ok(()),
-                i => Err(LauncherError::RunError(MSG_ERROR_CALLING_RUN.into(), i))
+                i => Err(LauncherError::RunError(MSG_ERROR_CALLING_RUN.to_string(), i))
             }
 		}
 	}

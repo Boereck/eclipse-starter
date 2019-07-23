@@ -3,7 +3,8 @@
 
 # Eclipse-Starter
 
-NOTE: This project is in an early prototyping phase.
+NOTE: This project is in an early stage. The launcher executable is in feature parity with the C version,
+the launcher companion library has no features up until now.
 
 The aim of this project is to rewrite the [Eclipse launcher](https://github.com/eclipse/rt.equinox.framework/tree/master/features/org.eclipse.equinox.executable.feature) executable and library in Rust.
 The first step is to rewrite the executable, and still be compatible with the existing library.
@@ -50,4 +51,4 @@ Also note that `glib-2.0` is only supported in version `2.42` or higher. This ex
 
 # License
 
-The code in this repository is EPL-2.0 licensed. However there is [one file](eclipse-common/src/messagebox/macos/nsalert.rs) licended under the MIT license.
+The code in this repository is EPL-2.0 licensed. However there is [one file](eclipse-common/src/messagebox/macos/nsalert.rs) licensed under the MIT license.

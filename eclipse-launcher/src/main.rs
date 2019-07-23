@@ -69,11 +69,12 @@ fn main() {
     let result = fallible_main(&mut params);
     if let Err(ref err) = &result {
         if params.suppress_errors {
-            // TODO: proper UI error handling
+            // Do not show dialog, just print to stdout
             eprintln!("{}\nDetails: \n{:#?}", err, err);
         } else {
             let title = opt_str(&params.name).unwrap_or_else(|| "");
             let msg = format!("{}", err);
+            // message dialog failed, print the error to stderr
             if let Err(msg) = display_message(&msg, &title) {
                 eprintln!("{}", msg);
             }
@@ -113,6 +114,8 @@ fn fallible_main(params: &mut EclipseLauncherParams) -> Result<(), LauncherError
         params.name = get_default_official_name();
     }
 
+    // If config prohibits root to start the application and
+    // the user is root, then stop the application.
     if cfg!(not(target_os = "windows")) && perform_root_check(params) && is_root() {
         let name = opt_str(&params.name).unwrap_or_else(|| "");
         return Err(LauncherError::SecurityError( format!("{} {}", name, MSG_ROOT_ERR) ));
@@ -122,6 +125,8 @@ fn fallible_main(params: &mut EclipseLauncherParams) -> Result<(), LauncherError
     load_lib_and_run(&params, &command_line_args, &ini_file_args, &exe_path)
 }
 
+/// Detects the location of the companion shared library library,
+/// loads it, and calls `setInitialArgs` and `run` on the library.
 fn load_lib_and_run(
     params: &EclipseLauncherParams,
     command_line_args: &[String],
@@ -247,19 +252,26 @@ fn first_to_uppercase(input: &str) -> String {
     result
 }
 
+/// Determins if the configuration demands a check
+/// if the user staring this executable is the root user
 fn perform_root_check(params: &EclipseLauncherParams) -> bool {
     opt_str(&params.protect) == Some(ROOT)
 }
 
+/// Turns an `&Option<String>` into an `Option<&str>`; this can
+/// be useful if the String must not be removed from the soure optional
+/// or if an optional should be compared to a static `&str`.
 fn opt_str<'a>(opt: &'a Option<String>) -> Option<&'a str> {
     opt.as_ref().map(String::as_str)
 }
 
+/// No root-check support for Windows
 #[cfg(target_os = "windows")]
 fn is_root() -> bool {
     false
 }
 
+/// Tests if the effective user is root
 #[cfg(not(target_os = "windows"))]
 fn is_root() -> bool {
     unsafe { geteuid() == 0 } 

@@ -35,7 +35,7 @@ where
     T: AsRef<str>,
 {
     fn from(msg: T) -> LauncherError {
-        LauncherError::GeneralError(msg.as_ref().into())
+        LauncherError::GeneralError(msg.as_ref().to_string())
     }
 }
 

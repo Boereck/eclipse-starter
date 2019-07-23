@@ -48,7 +48,7 @@ where
 			lib_api: unsafe { EclipseLauncherLibWin::load(lib) }
 				.map_err(|_| {
                     let msg = MSG_LOAD_LIB_SYMBOL_RESOLVE_ERROR;
-                    LauncherError::LibraryLookupError(msg.into())
+                    LauncherError::LibraryLookupError(msg.to_string())
                  })?,
 		})
 	}
@@ -69,7 +69,7 @@ where
 			let result = (self.lib_api.run)(count_args, args_native, vm_args_native);
             match result {
                 0 => Ok(()),
-                i => Err(LauncherError::RunError(MSG_ERROR_CALLING_RUN.into(), i))
+                i => Err(LauncherError::RunError(MSG_ERROR_CALLING_RUN.to_string(), i))
             }
 		}
 	}
