@@ -16,6 +16,7 @@
 //! companion library and call methods on it.
 
 use eclipse_common::path_util::strip_unc_prefix;
+use eclipse_common::native_str::{str_to_utf16, to_native_str};
 use super::common::{EclipseLauncher, InitialArgs, NativeString, RunMethod, SetInitialArgs, MSG_LOAD_LIB_SYMBOL_RESOLVE_ERROR, MSG_ERROR_CALLING_RUN};
 use dlopen::symbor::{Library, SymBorApi, Symbol};
 use dlopen_derive::*;
@@ -104,8 +105,7 @@ impl<'a> InitialArgs<'a> for SetInitialArgsParams<'a> {
 		let args_vec_nativestr_param = vec_to_native_string(&args_vec_vec_u16_param);
 		let args_ptr_nativestr_param = args_vec_nativestr_param.as_ptr();
 
-		let library_vec_u16_param = str_to_utf16(strip_unc_prefix(library));
-		let library_native_str_param: NativeString = library_vec_u16_param.as_ptr();
+		let (library_vec_u16_param, library_native_str_param) = to_native_str(strip_unc_prefix(library));
 		Self {
 			arg_count: args.len() as c_int,
 			args_vec_vec_u16: args_vec_vec_u16_param,
@@ -126,14 +126,6 @@ fn str_slice_to_widechar_vec<S: AsRef<str>>(slice: &[S]) -> Vec<Vec<u16>> {
 			str_to_utf16(s)
 		})
 		.collect()
-}
-
-/// Converts a Rust string into a Vec of 
-/// null-terminated UTF-16 characters
-fn str_to_utf16(s: &str) -> Vec<u16> {
-	let mut vec: Vec<u16> = s.encode_utf16().collect();
-	vec.push(0);
-	vec
 }
 
 fn vec_to_native_string(utf16args: &[Vec<u16>]) -> Vec<NativeString> {
