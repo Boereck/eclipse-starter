@@ -40,8 +40,10 @@ When run locally it can easily be spotted if the step failed, since the resultin
 
 ## Linux
 
-Linux builds need an installed dev version of GTK 3. For debian builds install the `libgtk-3-dev` package:
+Linux builds need an installed dev version of GTK 3. For Debian based distros install the `libgtk-3-dev` package:
 
 ```bash
 sudo apt install libgtk-3-dev -y
 ```
+
+Also note that `glib-2.0` is only supported in version `2.42` or higher. This excludes older distros like Ubuntu 14.04 or older.
