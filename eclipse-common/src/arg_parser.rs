@@ -19,7 +19,28 @@
 //! over the parameters.
 //! To get the results for parsing rules, the id values returned from the `add_*`
 //! methods need to be passed to the `take_*` methods on the `ParseResult`.
-//! ## TODO: Example
+//! 
+//! Example:
+//! ```
+//! let args = vec!["-application", "foo.bar", "-clean", "-vmargs", "-Dfoo=bar", "-Dfizz=buzz"];
+//! let mut parser = eclipse_common::arg_parser::Parser::new();
+//! 
+//! let clean = parser.add_flag("-clean");
+//! let vmargs = parser.add_list("-vmargs");
+//! let application = parser.add_option("-application");
+//! 
+//! let mut parse_result = parser.parse(args);
+//! 
+//! let clean_value = parse_result.take_flag(clean);
+//! assert!(clean_value);
+//! 
+//! let vmargs_value = parse_result.take_list(vmargs);
+//! let expected_vmargs = vec!["-Dfoo=bar".to_string(), "-Dfizz=buzz".to_string()];
+//! assert_eq!(vmargs_value.unwrap(), expected_vmargs);
+//! 
+//! let application_value = parse_result.take_option(application);
+//! assert_eq!(application_value.unwrap(), "foo.bar");
+//! ```
 
 use std::collections::{HashMap, HashSet};
 
@@ -202,10 +223,9 @@ mod parser_test {
     #[test]
     fn test_parsing_option() {
         let args = ["-application", "foo.bar"];
-        let iter = args.iter().copied();
         let mut parser = super::Parser::new();
         let application = parser.add_option("-application");
-        let mut parse_result = parser.parse(iter);
+        let mut parse_result = parser.parse(args.iter().copied());
         
         let application_value = parse_result.take_option(application);
         assert_eq!(application_value.unwrap(), "foo.bar");
@@ -238,7 +258,7 @@ mod parser_test {
 
     #[test]
     fn test_parsing_flag() {
-        let args = ["-clean"];
+        let args = vec!["-clean"];
         let iter = args.iter().copied();
         
         let mut parser = super::Parser::new();
