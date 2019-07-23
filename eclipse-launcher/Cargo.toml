@@ -28,6 +28,10 @@ dlopen = "0.1.7"
 dlopen_derive = "0.1.4"
 eclipse-common = { path = "../eclipse-common" }
 
+
+[target.'cfg(not(target_os = "windows"))'.dependencies]
+libc = "0.2.60"
+
 [build-dependencies]
 winres = "0.1.11"
 

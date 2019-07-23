@@ -42,12 +42,18 @@ use params::EclipseLauncherParams;
 use std::path::Path;
 use unicode_segmentation::UnicodeSegmentation;
 
+#[cfg(not(target_os="windows"))]
+use libc::geteuid;
+
 // Error messages
 
 static MSG_EXE_LOCATION_NOT_FOUND: &str = "Determining the launcher location failed.";
 static MSG_EXE_PARENT_NOT_FOUND: &str = "Parent directory of launcher not found.";
 static MSG_LIB_PATH_CONVERSION_ERR: &str = "Converting path name of companion library failed.";
 static MSG_EXE_PATH_CONVERSION_ERR: &str = "Converting path name of launcher failed.";
+static MSG_ROOT_ERR: &str = "executable launcher is configured to not start with administrative privileges.";
+
+static ROOT: &str = "root";
 
 // Possible launcher executable arguments
 
@@ -66,7 +72,7 @@ fn main() {
             // TODO: proper UI error handling
             eprintln!("{}\nDetails: \n{:#?}", err, err);
         } else {
-            let title = params.name.unwrap_or_else(|| "".to_string());
+            let title = opt_str(&params.name).unwrap_or_else(|| "");
             let msg = format!("{}", err);
             if let Err(msg) = display_message(&msg, &title) {
                 eprintln!("{}", msg);
@@ -104,10 +110,13 @@ fn fallible_main(params: &mut EclipseLauncherParams) -> Result<(), LauncherError
     // get default name if not yet set
     if params.name.is_none() {
         // Initialize official program name
-        params.name = get_default_official_name()
+        params.name = get_default_official_name();
     }
 
-    // TODO: Root check on Mac OS
+    if cfg!(not(target_os = "windows")) && perform_root_check(params) && is_root() {
+        let name = opt_str(&params.name).unwrap_or_else(|| "");
+        return Err(LauncherError::SecurityError( format!("{} {}", name, MSG_ROOT_ERR) ));
+    }
 
     // load and promt msg on failure
     load_lib_and_run(&params, &command_line_args, &ini_file_args, &exe_path)
@@ -236,4 +245,22 @@ fn first_to_uppercase(input: &str) -> String {
     // push the rest "as is" into the result
     result.push_str(graphemes.as_str());
     result
+}
+
+fn perform_root_check(params: &EclipseLauncherParams) -> bool {
+    opt_str(&params.protect) == Some(ROOT)
+}
+
+fn opt_str<'a>(opt: &'a Option<String>) -> Option<&'a str> {
+    opt.as_ref().map(String::as_str)
+}
+
+#[cfg(target_os = "windows")]
+fn is_root() -> bool {
+    false
+}
+
+#[cfg(not(target_os = "windows"))]
+fn is_root() -> bool {
+    unsafe { geteuid() == 0 } 
 }
