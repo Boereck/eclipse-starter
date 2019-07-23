@@ -25,10 +25,10 @@ use eclipse_common::path_util::*;
 // It seems there is no constant for paths separator in the rust standard library,
 // so we define this character for ourselves.
 
-#[cfg(windows)]
+#[cfg(target_os = "windows")]
 const PATHS_SEPARATOR: char = ';';
 
-#[cfg(not(windows))]
+#[cfg(not(target_os = "windows"))]
 const PATHS_SEPARATOR: char = ':';
 
 /// If `exe_path` is a symlink, the symlink is resolved 

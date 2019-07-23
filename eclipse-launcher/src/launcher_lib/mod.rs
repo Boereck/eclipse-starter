@@ -38,7 +38,7 @@ pub use common::{EclipseLauncher, InitialArgs};
 static DEFAULT_EQUINOX_STARTUP: &str = "org.eclipse.equinox.launcher";
 static MSG_UNABLE_LOCATE_LIBRARY: &str = "The executable launcher was unable to locate its companion shared library from";
 static MSG_LIBRARY_NOT_FOUND: &str = "Launcher companion library not found.";
-static MSG_PLUGIN_NOT_FOUND: &str = "Launcher plugin not found in path";
+static MSG_PLUGIN_NOT_FOUND: &str = "Launcher plugin, containing companion shared library, not found in path";
 
 /// Creates an instance of `EclipseLauncher` for the given `library`, which allows to
 /// call functions on the library.
@@ -113,11 +113,11 @@ pub fn find_library(library_dir: &Option<String>, program_dir: &Path) -> Result<
         // find equinox.launcher plugin directory containing the companion dynamic library
         let plugin_dir_opt = find_file(&plugin_path, &fragment);
         let plugin_dir =
-            plugin_dir_opt.ok_or_else(|| format!("{} {:?}.", MSG_PLUGIN_NOT_FOUND, &plugin_path))?;
+            plugin_dir_opt.ok_or_else(|| format!("{} {}.", MSG_PLUGIN_NOT_FOUND, &plugin_path.to_string_lossy()))?;
 
         // Find companion dynamic library in plugins folder
         find_file(&plugin_dir, "eclipse")
             .filter(|path| path.is_file())
-            .ok_or_else(|| format!("{} {:?}.", MSG_UNABLE_LOCATE_LIBRARY, &plugin_dir))
+            .ok_or_else(|| format!("{} {}.", MSG_UNABLE_LOCATE_LIBRARY, &plugin_dir.to_string_lossy()))
     }
 }

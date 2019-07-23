@@ -3,11 +3,11 @@
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at 
+ * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
@@ -16,26 +16,37 @@
 //! launcher_lib implementations in `crate::launcher_lib::os`, which are located
 //! in `windows.rs` and `unix.rs`.
 
-
-#[cfg(not(windows))]
-use std::os::raw::c_char;
-use std::os::raw::c_int;
 use crate::errors::LauncherError;
+pub(crate) use eclipse_common::native_str::NativeString;
 use dlopen::symbor::Library;
+use std::os::raw::c_int;
 
+pub static MSG_LOAD_LIB_SYMBOL_RESOLVE_ERROR: &str =
+    "There was a problem loading the shared library and finding the entry point.";
+pub static MSG_ERROR_CALLING_RUN: &str = "Error calling the run function on the launcher library.";
 
-pub static MSG_LOAD_LIB_SYMBOL_RESOLVE_ERROR:  &str = "There was a problem loading the shared library and finding the entry point.";
-pub static MSG_ERROR_CALLING_RUN:  &str = "Error calling the run function on the launcher library.";
+/// API of the native companion library's "run" method. Before calling this method, the user
+/// has to call method "setInitialArgs".
+///
+/// The first parameter represents the count of strings that are passed as the second argument.
+/// As the second parameter an array of native strings of the merged parameters from ini config file,
+/// followed by command line parameters is expected. The third parameter is an array of JVM parameters read
+/// from the command line. Note that the VM argument array must be terminated with `null` element.
+pub(super) type RunMethod =
+    unsafe extern "C" fn(c_int, *const NativeString, *const NativeString) -> c_int;
 
-// On Windows we use UTF-16 chars
-#[cfg(windows)]
-pub(super) type NativeString = *const u16;
-
-#[cfg(not(windows))]
-pub(super) type NativeString = *const c_char;
-
-pub(super) type RunMethod = unsafe extern "C" fn(c_int, *const NativeString, *const NativeString) -> c_int;
-pub(super) type SetInitialArgs = unsafe extern "C" fn(c_int, *const NativeString, NativeString) -> ();
+/// API of the native companion library's "setInitialArgs" method. This method has to be called
+/// before calling the `run` method.
+///
+/// The first parameter represents
+/// the count of strings passed as the second argument. The caller shall pass the original
+/// command line paramers as an array of strings to this method. The third parameter must
+/// be the absolute file path to the native library that is called.
+///
+/// *Important*: The caller is responsible for the lifetime of all passed pointers. All arrays
+/// and strings must be kept in memory until after the "run" method returned and then freed.
+pub(super) type SetInitialArgs =
+    unsafe extern "C" fn(c_int, *const NativeString, NativeString) -> ();
 
 /// Type holding inital parameters needed to call `EclipseLauncher::set_initial_args`.
 pub trait InitialArgs<'b> {

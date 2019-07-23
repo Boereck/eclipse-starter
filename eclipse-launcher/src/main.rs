@@ -34,6 +34,7 @@ mod params;
 use eclipse_common::arg_parser::*;
 use eclipse_common::ini_reader::*;
 use eclipse_common::path_util::strip_unc_prefix;
+use eclipse_common::messagebox::display_message;
 use errors::LauncherError;
 use exe_util::get_exe_path;
 use launcher_lib::{find_library, load_library, new_launcher, EclipseLauncher};
@@ -43,10 +44,10 @@ use unicode_segmentation::UnicodeSegmentation;
 
 // Error messages
 
-static MSG_EXE_LOCATION_NOT_FOUND: &str = "Determining the launcher location failed";
-static MSG_EXE_PARENT_NOT_FOUND: &str = "Parent directory of launcher not found";
-static MSG_LIB_PATH_CONVERSION_ERR: &str = "Converting path name of companion library failed";
-static MSG_EXE_PATH_CONVERSION_ERR: &str = "Converting path name of launcher failed";
+static MSG_EXE_LOCATION_NOT_FOUND: &str = "Determining the launcher location failed.";
+static MSG_EXE_PARENT_NOT_FOUND: &str = "Parent directory of launcher not found.";
+static MSG_LIB_PATH_CONVERSION_ERR: &str = "Converting path name of companion library failed.";
+static MSG_EXE_PATH_CONVERSION_ERR: &str = "Converting path name of launcher failed.";
 
 // Possible launcher executable arguments
 
@@ -63,16 +64,21 @@ fn main() {
     if let Err(ref err) = &result {
         if params.suppress_errors {
             // TODO: proper UI error handling
-        } else {
             eprintln!("{}\nDetails: \n{:#?}", err, err);
-            let err_code = match err {
-                LauncherError::LibraryLookupError(_) => 1,
-                LauncherError::SecurityError(_) => 2,
-                LauncherError::GeneralError(_) => 3,
-                LauncherError::RunError(_, i) => *i as i32,
-            };
-            std::process::exit(err_code);
+        } else {
+            let title = params.name.unwrap_or_else(|| "".to_string());
+            let msg = format!("{}", err);
+            if let Err(msg) = display_message(&msg, &title) {
+                eprintln!("{}", msg);
+            }
         }
+        let err_code = match err {
+            LauncherError::LibraryLookupError(_) => 1,
+            LauncherError::SecurityError(_) => 2,
+            LauncherError::GeneralError(_) => 3,
+            LauncherError::RunError(_, i) => *i as i32,
+        };
+        std::process::exit(err_code);
     }
 }
 

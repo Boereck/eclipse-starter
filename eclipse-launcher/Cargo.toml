@@ -26,8 +26,6 @@ win_console = []
 unicode-segmentation = "1.3.0"
 dlopen = "0.1.7"
 dlopen_derive = "0.1.4"
-regex = "1.1.9"
-lazy_static = "1.3.0"
 eclipse-common = { path = "../eclipse-common" }
 
 [build-dependencies]

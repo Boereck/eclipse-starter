@@ -27,6 +27,8 @@ Just like the original C library build, the following environment variables can 
 
 However, these variables do not have to be set. The Rust build will select default values based on the build target.
 
+## Windows
+
 To create a Windows launcher with resource information applied, a Windows SDK needs to be installed.
 The easiest way is to install the SDK using [chocolatey](https://chocolatey.org/). Call the following line on an admin PowerShell instance:
 ```powershell
@@ -35,3 +37,11 @@ choco install -y windows-sdk-10
 When the SDK is not installed, the resource info step fails silently. It is possible to run the build with `cargo build -vv`
 to see the output of the build step setting the resource info. This way it can be determined "manually" if this step failed.
 When run locally it can easily be spotted if the step failed, since the resulting `eclipse.exe` does not have an icon attached to it.
+
+## Linux
+
+Linux builds need an installed dev version of GTK 3. For debian builds install the `libgtk-3-dev` package:
+
+```bash
+sudo apt install libgtk-3-dev -y
+```
