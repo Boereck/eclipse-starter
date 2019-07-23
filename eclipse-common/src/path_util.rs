@@ -26,7 +26,7 @@ use std::path::PathBuf;
 /// able to cope with Windows UNC file names
 /// On other systems this function is a no-op.
 pub fn strip_unc_prefix(file_path: &str) -> &str {
-	if cfg!(windows) {
+	if cfg!(target_os = "windows") {
         file_path.trim_start_matches(r"\\?\")
     } else {
 	   file_path

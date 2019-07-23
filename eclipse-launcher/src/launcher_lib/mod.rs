@@ -72,7 +72,7 @@ pub fn load_library(lib_path: &Path) -> Result<Library, LauncherError> {
 /// library in there.
 pub fn find_library(library_dir: &Option<String>, program_dir: &Path) -> Result<PathBuf, String> {
     if let Some(library_location) = library_dir {
-        let library_loc = if cfg!(windows) {
+        let library_loc = if cfg!(target_os = "windows") {
             // usually mixing \ and / do not matter for windows,
             // but appearently when joining a conconicalized path with
             // a path containing / does
@@ -105,7 +105,7 @@ pub fn find_library(library_dir: &Option<String>, program_dir: &Path) -> Result<
         }
 
         let mut plugin_path = program_dir.to_path_buf();
-        if cfg!(macos) {
+        if cfg!(target_os ="macos") {
             plugin_path.push("../../../")
         }
         plugin_path.push("plugins");

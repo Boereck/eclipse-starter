@@ -39,7 +39,7 @@ pub fn get_exe_path() -> Result<PathBuf,io::Error> {
     if let Some(first_arg) = std::env::args().next() {
         let mut program_path = PathBuf::from(first_arg);
         // On windows we always use file extension .exe
-        if cfg!(windows) && !has_extension_exe(&program_path) {
+        if cfg!(target_os = "windows") && !has_extension_exe(&program_path) {
             program_path.set_extension("exe");
         }
         if let Some(program_location) = find_program(&program_path) {

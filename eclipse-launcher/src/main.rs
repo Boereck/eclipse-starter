@@ -170,7 +170,7 @@ fn merge_parameters<'a>(
     command_line_args: &'a [String],
 ) -> Vec<&'a str> {
     let mut result: Vec<&'a str> = Vec::new();
-    let exe_path_param = if cfg!(windows) {
+    let exe_path_param = if cfg!(target_os = "windows") {
         // TODO: if library supports long path names, we don't have to strip
         strip_unc_prefix(exe_path)
     } else {
