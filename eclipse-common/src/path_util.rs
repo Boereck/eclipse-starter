@@ -138,5 +138,102 @@ fn to_string(m: Option<Match>) -> String {
     m.map(|m| m.as_str().to_string()).unwrap_or_default()
 }
 
+#[cfg(test)]
+mod tests {
+    
+    #[test]
+    fn test_get_version_plugin_name() {
+        let version = super::get_version("_1.2.551.v20171108-1834");
+        assert_eq!(version.major, 1);
+        assert_eq!(version.minor, 2);
+        assert_eq!(version.patch, 551);
+        assert_eq!(version.qualifier, "v20171108-1834");
+    }
 
+    #[test]
+    fn test_get_version_dll_name() {
+        let version = super::get_version("_1630.dll");
+        assert_eq!(version.major, 1630);
+        assert_eq!(version.minor, 0);
+        assert_eq!(version.patch, 0);
+        assert_eq!(version.qualifier, "");
+    }
+
+    #[test]
+    fn test_get_version_so_name() {
+        let version = super::get_version("_1780.so");
+        assert_eq!(version.major, 1780);
+        assert_eq!(version.minor, 0);
+        assert_eq!(version.patch, 0);
+        assert_eq!(version.qualifier, "");
+    }
+
+    #[test]
+    fn test_version_major_wins() {
+        let bigger = super::Version {
+            major : 100,
+            minor : 0,
+            patch : 1,
+            qualifier: "000000".to_string(),
+        };
+        let smaller = super::Version {
+            major : 10,
+            minor : 100_000,
+            patch : 5000,
+            qualifier: "12345".to_string(),
+        };
+        assert!(bigger > smaller);
+    }
+
+    #[test]
+    fn test_version_major_equal_minor_wins() {
+        let bigger = super::Version {
+            major : 100,
+            minor : 10,
+            patch : 1,
+            qualifier: "000000".to_string(),
+        };
+        let smaller = super::Version {
+            major : 100,
+            minor : 2,
+            patch : 5000,
+            qualifier: "12345".to_string(),
+        };
+        assert!(bigger > smaller);
+    }
+
+    #[test]
+    fn test_version_major_minor_equal_patch_wins() {
+        let bigger = super::Version {
+            major : 100,
+            minor : 50,
+            patch : 42,
+            qualifier: "000000".to_string(),
+        };
+        let smaller = super::Version {
+            major : 100,
+            minor : 50,
+            patch : 41,
+            qualifier: "12345".to_string(),
+        };
+        assert!(bigger > smaller);
+    }
+
+    #[test]
+    fn test_version_major_minor_patch_equal_qualifier_wins() {
+        let bigger = super::Version {
+            major : 100,
+            minor : 50,
+            patch : 42,
+            qualifier: "v20171109-1834".to_string(),
+        };
+        let smaller = super::Version {
+            major : 100,
+            minor : 50,
+            patch : 42,
+            qualifier: "v20171108-1834".to_string(),
+        };
+        assert!(bigger > smaller);
+    }
+}
 // TODO: test get_version and comparison between Version values

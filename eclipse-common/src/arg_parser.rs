@@ -22,15 +22,19 @@
 //! 
 //! Example:
 //! ```
+//! // arguments to parse
 //! let args = vec!["-application", "foo.bar", "-clean", "-vmargs", "-Dfoo=bar", "-Dfizz=buzz"];
+//! 
 //! let mut parser = eclipse_common::arg_parser::Parser::new();
 //! 
+//! // define parsing rules
 //! let clean = parser.add_flag("-clean");
 //! let vmargs = parser.add_list("-vmargs");
 //! let application = parser.add_option("-application");
 //! 
 //! let mut parse_result = parser.parse(args);
 //! 
+//! // get parse results
 //! let clean_value = parse_result.take_flag(clean);
 //! assert!(clean_value);
 //! 
