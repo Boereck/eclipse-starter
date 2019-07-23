@@ -12,7 +12,7 @@
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
 
-#[cfg_attr(target_os = "macos", path = "macos.rs")]
+#[cfg_attr(target_os = "macos", path = "macos/mod.rs")]
 #[cfg_attr(target_os = "linux", path = "gtk.rs")]
 #[cfg_attr(target_os = "windows", path = "windows.rs")]
 // TODO support gtk on windows/macos via feature flag?
