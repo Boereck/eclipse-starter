@@ -51,4 +51,4 @@ Also note that `glib-2.0` is only supported in version `2.42` or higher. This ex
 
 # License
 
-The code in this repository is EPL-2.0 licensed. However there is [one file](eclipse-common/src/messagebox/macos/nsalert.rs) licensed under the MIT license.
+The code in this repository is EPL-2.0 licensed. However, there is [one file](eclipse-common/src/messagebox/macos/nsalert.rs) licensed under the MIT license.
