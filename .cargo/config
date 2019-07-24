@@ -1,0 +1,5 @@
+[target.'cfg(target_env = "msvc")']
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[alias]
+win_console = ["build", "--manifest-path", "./eclipse-launcher/Cargo.toml", "--bin", "eclipsec", "--features", "win_console", "--release"]

@@ -1,3 +1,6 @@
+//! This module provides types for OS native strings
+//! and some methods for converting Rust strings into Windows wide (UTF-16) strings.
+
 #[cfg(not(windows))]
 use std::os::raw::c_char;
 

@@ -13,7 +13,7 @@
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
 
-use jni::objects::{JClass, JObject, JString};
+use jni::objects::{JObject, JString};
 use jni::sys::{jstring, jlong};
 use jni::JNIEnv;
 

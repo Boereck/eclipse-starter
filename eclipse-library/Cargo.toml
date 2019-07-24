@@ -17,6 +17,14 @@ authors = ["Max Bureck <max.bureck@fokus.fraunhofer.de>"]
 edition = "2018"
 license = "EPL-2.0"
 
+[profile.release]
+opt-level = 'z'
+lto = true
+codegen-units = 1
+panic = 'abort'
+incremental = false
+debug = false
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]

@@ -18,7 +18,8 @@ The project is structured into three sub-projects:
 ## Build
 
 The build is currently very easy. The current version of Rust has to be installed and `cargo build` has to be called in the root directory of the project.
-To build a release binary call `cargo build --release`. To build a windows binary that starts a console window, call `cargo build --bin eclipsec --features win_console`. The command to build the Windows command-promt version has to be run from within the sub-project `eclipse-launcher`.
+To build a release binary call `cargo build --release`. To build a windows binary that starts a console window, call `cargo win_console` from the
+root of the project. This command is a shortcut alias for calling `cargo build --bin eclipsec --features win_console --release` from within the sub-project `eclipse-launcher`.
 
 Just like the original C library build, the following environment variables can be defined to set default os, arch, and ws values:
 
