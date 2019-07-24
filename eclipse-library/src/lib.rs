@@ -12,6 +12,8 @@
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
 
+mod java;
+
 use std::os::raw::c_int;
 
 #[cfg(not(windows))]

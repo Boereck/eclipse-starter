@@ -24,4 +24,5 @@ name = "eclipse_lib"
 crate-type = ["cdylib"]
 
 [dependencies]
+jni = "0.13.0"
 eclipse-common = { path = "../eclipse-common" }
