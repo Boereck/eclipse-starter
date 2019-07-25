@@ -16,12 +16,18 @@ use std::io;
 use winres::WindowsResource;
 
 fn main() {
-    if let Err(err) = set_resource_info() {
-        eprintln!("{}", err);
+    let win_console = std::env::var("CARGO_FEATURE_WIN_CONSOLE").is_ok();
+    // Only specify resource if not windows console version
+    if !win_console {
+        if let Err(err) = set_resource_info() {
+            eprintln!("{}", err);
+        }
     }
 }
 
 fn set_resource_info() -> Result<(), io::Error>  {
+    // On windows build (not console version), set resource info (icon and manifest)
+    // TODO: should manifest be set also for console-version? It contains info about DPI awareness.
     if cfg!(target_os = "windows") {
         let mut res = WindowsResource::new();
         res.set_resource_file("res/eclipse.rc");
