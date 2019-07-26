@@ -33,8 +33,8 @@ mod params;
 
 use eclipse_common::arg_parser::*;
 use eclipse_common::ini_reader::*;
-use eclipse_common::path_util::strip_unc_prefix;
 use eclipse_common::messagebox::display_message;
+use eclipse_common::path_util::strip_unc_prefix;
 use errors::LauncherError;
 use exe_util::get_exe_path;
 use launcher_lib::{find_library, load_library, new_launcher, EclipseLauncher};
@@ -42,7 +42,7 @@ use params::EclipseLauncherParams;
 use std::path::Path;
 use unicode_segmentation::UnicodeSegmentation;
 
-#[cfg(not(target_os="windows"))]
+#[cfg(not(target_os = "windows"))]
 use libc::geteuid;
 
 // Error messages
@@ -51,7 +51,8 @@ static MSG_EXE_LOCATION_NOT_FOUND: &str = "Determining the launcher location fai
 static MSG_EXE_PARENT_NOT_FOUND: &str = "Parent directory of launcher not found.";
 static MSG_LIB_PATH_CONVERSION_ERR: &str = "Converting path name of companion library failed.";
 static MSG_EXE_PATH_CONVERSION_ERR: &str = "Converting path name of launcher failed.";
-static MSG_ROOT_ERR: &str = "executable launcher is configured to not start with administrative privileges.";
+static MSG_ROOT_ERR: &str =
+    "executable launcher is configured to not start with administrative privileges.";
 
 static ROOT: &str = "root";
 
@@ -118,7 +119,10 @@ fn fallible_main(params: &mut EclipseLauncherParams) -> Result<(), LauncherError
     // the user is root, then stop the application.
     if cfg!(not(target_os = "windows")) && perform_root_check(params) && is_root() {
         let name = opt_str(&params.name).unwrap_or_else(|| "");
-        return Err(LauncherError::SecurityError( format!("{} {}", name, MSG_ROOT_ERR) ));
+        return Err(LauncherError::SecurityError(format!(
+            "{} {}",
+            name, MSG_ROOT_ERR
+        )));
     }
 
     // load and promt msg on failure
@@ -196,7 +200,7 @@ fn parse_arguments<'a, 'b>(
     let protect = parser.add_option(PROTECT_ARG);
     let suppress_errors = parser.add_flag(SUPPRESS_ERRORS_ARGS);
     let launcher_ini = parser.add_option(LAUNCHER_INI_ARG);
-    let vm_args = parser.add_list(VMARGS_ARG);
+    let vm_args = parser.add_list(VMARGS_ARG, ListParseStyle::AllRemaining);
 
     let mut parse_result = parser.parse(args);
 
@@ -261,7 +265,7 @@ fn perform_root_check(params: &EclipseLauncherParams) -> bool {
 /// Turns an `&Option<String>` into an `Option<&str>`; this can
 /// be useful if the String must not be removed from the soure optional
 /// or if an optional should be compared to a static `&str`.
-fn opt_str<'a>(opt: &'a Option<String>) -> Option<&'a str> {
+fn opt_str(opt: &Option<String>) -> Option<&str> {
     opt.as_ref().map(String::as_str)
 }
 
@@ -274,5 +278,5 @@ fn is_root() -> bool {
 /// Tests if the effective user is root
 #[cfg(not(target_os = "windows"))]
 fn is_root() -> bool {
-    unsafe { geteuid() == 0 } 
+    unsafe { geteuid() == 0 }
 }
