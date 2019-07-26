@@ -35,3 +35,4 @@ crate-type = ["cdylib"]
 jni = "0.13.0"
 lazy_static = "1.3.0"
 eclipse-common = { path = "../eclipse-common" }
+jni-mangle = { path = "../jni-mangle" }

@@ -10,11 +10,17 @@
 # Contributors:
 #     Max Bureck (Fraunhofer FOKUS)
 
-[workspace]
+[package]
+name = "jni-mangle"
+version = "0.1.0"
+authors = ["Max Bureck <max.bureck@fokus.fraunhofer.de>"]
+edition = "2018"
+license = "EPL-2.0"
 
-members = [
-    "eclipse-common",
-    "eclipse-launcher",
-    "eclipse-library",
-    "jni-mangle",
-]
+[lib]
+proc-macro = true
+crate-type = ["proc-macro"]
+
+[dependencies]
+syn = { version = "0.15.42", features = ["full"] }
+quote = "0.6.13"

@@ -152,7 +152,7 @@ use native_arg_read::*;
 use lazy_static::lazy_static;
 use std::sync::Mutex;
 
-static MSG_SETTING_INITIAL_ARGS_FAIL: &str = "Setting intial arguments failed.";
+static MSG_SETTING_INITIAL_ARGS_FAIL: &str = "Accessing intial arguments failed.";
 static LOCK_ERR_CODE: i32 = 2;
 
 #[derive(Default)]
@@ -185,17 +185,23 @@ fn run_internal(args: Vec<String>, vm_args: Vec<String>) -> i32 {
     let program = args.get(0);
     
     let args = parse_args(&args);
-    
+    println!("{:#?}", args);
+
     let lock = INITIAL_ARGS.lock();
-    let initial_args = match lock {
-        Ok(guard) => guard,
+    let mut initial_args = match lock {
+        Ok(mut guard) => guard,
         Err(e) => {
+            // TODO: if !args.suppress_errors call eclipse_common::messagebox::display_message
             // We have no information about suppressing errors, let's just print to syserr
             eprintln!("{}", MSG_SETTING_INITIAL_ARGS_FAIL);
             eprintln!("{:?}", e);
             return LOCK_ERR_CODE;
         }
     };
+    
+    // Free global memory
+    initial_args.args.clear();
+    initial_args.library = PathBuf::new();
     0
 }
 

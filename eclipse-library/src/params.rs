@@ -14,7 +14,7 @@
 
 use eclipse_common::arg_parser::OptionalParam;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct EclipseParams {
     pub console: OptionalParam,
     pub console_log: bool,
