@@ -22,6 +22,7 @@ use std::os::raw::c_char;
 #[cfg(target_os = "windows")]
 use std::os::windows::prelude::*;
 
+#[cfg(target_os = "windows")]
 pub fn utf16_str_array_to_string_vec(native_strings: *mut NativeString, count: usize) -> Vec<String> {
     let args_slice : &[NativeString] = unsafe { 
         std::slice::from_raw_parts(native_strings, count)
@@ -29,6 +30,8 @@ pub fn utf16_str_array_to_string_vec(native_strings: *mut NativeString, count: u
     let args_vec: Vec<String> = args_slice.iter().filter_map(utf16_to_string).collect();
     args_vec
 }
+
+#[cfg(target_os = "windows")]
 pub fn null_term_utf16_str_array_to_string_vec(native_strings: *mut NativeString) -> Vec<String> {
     let count = count_ptrs_null_term(native_strings);
     utf16_str_array_to_string_vec(native_strings, count)

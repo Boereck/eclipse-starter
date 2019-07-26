@@ -165,6 +165,13 @@ lazy_static! {
     static ref INITIAL_ARGS: Mutex<InitialArgs> = Mutex::default();
 }
 
+#[cfg(not(target_os = "windows"))]
+#[no_mangle]
+pub unsafe extern fn run(args_size: c_int, args: *mut NativeString, vm_args: *mut NativeString) -> c_int {
+    // TODO convert to strings and call run_internal
+    0
+}
+
 #[cfg(target_os = "windows")]
 #[no_mangle]
 #[allow(non_snake_case)]
@@ -192,10 +199,18 @@ fn run_internal(args: Vec<String>, vm_args: Vec<String>) -> i32 {
     0
 }
 
-#[cfg(target_os = "windows")]
+
+#[cfg(not(target_os = "windows"))]
 #[no_mangle]
 #[allow(non_snake_case)]
 pub extern fn setInitialArgsW(args_size: c_int, args: *mut NativeString, library: NativeString) {
+    // TODO: parse strings and call set_initial_args_internal
+}
+
+#[cfg(target_os = "windows")]
+#[no_mangle]
+#[allow(non_snake_case)]
+pub extern fn setInitialArgs(args_size: c_int, args: *mut NativeString, library: NativeString) {
     let arg_strings = utf16_str_array_to_string_vec(args, args_size as usize);
     let library_str = utf16_to_string(&library).unwrap_or_default();
     let library_path = PathBuf::from_str(&library_str).unwrap_or_default();
