@@ -45,9 +45,10 @@ impl<'a,'b> EclipseLauncher<'a,'b> for EclipseLauncherOs<'a>
 	{
 		Ok(Self {
 			lib_api: unsafe { EclipseLauncherLibApi::load(lib) }
-				.map_err(|_| {
+				.map_err(|e| {
                     let msg = MSG_LOAD_LIB_SYMBOL_RESOLVE_ERROR;
-                    LauncherError::LibraryLookupError(msg.to_string())
+                    let result = format!("{}\n{}", msg, e);
+                    LauncherError::LibraryLookupError(result)
                  })?,
 		})
 	}

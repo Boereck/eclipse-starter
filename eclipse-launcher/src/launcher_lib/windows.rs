@@ -49,7 +49,7 @@ where
 			lib_api: unsafe { EclipseLauncherLibWin::load(lib) }
 				.map_err(|e| {
                     let msg = MSG_LOAD_LIB_SYMBOL_RESOLVE_ERROR;
-                    let result = format!("{}:\n{:#?}", msg, e);
+                    let result = format!("{}\n{}", msg, e);
                     LauncherError::LibraryLookupError(result)
                  })?,
 		})
