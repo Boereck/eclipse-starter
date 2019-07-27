@@ -144,6 +144,7 @@ mod run;
 mod params;
 
 use eclipse_params_parse::parse_args;
+use eclipse_common::name_util::get_default_official_name_from_str;
 use std::str::FromStr;
 use std::os::raw::c_int;
 use std::path::PathBuf;
@@ -182,10 +183,14 @@ pub unsafe extern fn runW(args_size: c_int, args: *mut NativeString, vm_args: *m
 }
 
 fn run_internal(args: Vec<String>, vm_args: Vec<String>) -> i32 {
-    let program = args.get(0);
+    let program = args.get(0).map(|s| s.as_ref()).unwrap_or_default();
     
-    let args = parse_args(&args);
-    println!("{:#?}", args);
+    let mut args = parse_args(&args);
+    if args.name.is_none() {
+        let default_name = get_default_official_name_from_str(&program);
+        args.name = default_name;
+    }
+//    println!("{:#?}", args);
 
     let lock = INITIAL_ARGS.lock();
     let mut initial_args = match lock {
@@ -209,14 +214,14 @@ fn run_internal(args: Vec<String>, vm_args: Vec<String>) -> i32 {
 #[cfg(not(target_os = "windows"))]
 #[no_mangle]
 #[allow(non_snake_case)]
-pub extern fn setInitialArgsW(args_size: c_int, args: *mut NativeString, library: NativeString) {
+pub extern fn setInitialArgs(args_size: c_int, args: *mut NativeString, library: NativeString) {
     // TODO: parse strings and call set_initial_args_internal
 }
 
 #[cfg(target_os = "windows")]
 #[no_mangle]
 #[allow(non_snake_case)]
-pub extern fn setInitialArgs(args_size: c_int, args: *mut NativeString, library: NativeString) {
+pub extern fn setInitialArgsW(args_size: c_int, args: *mut NativeString, library: NativeString) {
     let arg_strings = utf16_str_array_to_string_vec(args, args_size as usize);
     let library_str = utf16_to_string(&library).unwrap_or_default();
     let library_path = PathBuf::from_str(&library_str).unwrap_or_default();

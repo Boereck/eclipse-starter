@@ -47,9 +47,10 @@ where
 	fn new(lib: &'a Library) -> Result<Self, LauncherError> {
 		Ok(Self {
 			lib_api: unsafe { EclipseLauncherLibWin::load(lib) }
-				.map_err(|_| {
+				.map_err(|e| {
                     let msg = MSG_LOAD_LIB_SYMBOL_RESOLVE_ERROR;
-                    LauncherError::LibraryLookupError(msg.to_string())
+                    let result = format!("{}:\n{:#?}", msg, e);
+                    LauncherError::LibraryLookupError(result)
                  })?,
 		})
 	}

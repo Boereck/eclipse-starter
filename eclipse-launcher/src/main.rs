@@ -33,6 +33,7 @@ mod params;
 
 use eclipse_common::arg_parser::*;
 use eclipse_common::ini_reader::*;
+use eclipse_common::name_util::get_default_official_name;
 use eclipse_common::messagebox::display_message;
 use eclipse_common::path_util::strip_unc_prefix;
 use errors::LauncherError;
@@ -228,33 +229,6 @@ fn set_if_none<T>(target: &mut Option<T>, from: Option<T>) {
     }
 }
 
-/// Determine the default official application name
-///
-/// This function provides the default application name that appears in a variety of
-/// places such as: title of message dialog, title of splash screen window
-/// that shows up in Windows task bar.
-/// It is computed from the name of the launcher executable and
-/// by capitalizing the first letter. e.g. "c:/ide/eclipse.exe" provides
-/// a default name of "Eclipse".
-fn get_default_official_name() -> Option<String> {
-    let exe_path = std::env::current_exe().ok()?;
-    let file_name = exe_path.file_stem()?.to_str()?;
-    first_to_uppercase(file_name).into()
-}
-
-fn first_to_uppercase(input: &str) -> String {
-    // split characters at unicode "grapheme cluster"
-    let extended = true;
-    let mut graphemes = input.graphemes(extended);
-    // Uppercase only first cluster
-    let mut result = String::new();
-    if let Some(first_char) = graphemes.next() {
-        result.push_str(&first_char.to_uppercase());
-    }
-    // push the rest "as is" into the result
-    result.push_str(graphemes.as_str());
-    result
-}
 
 /// Determins if the configuration demands a check
 /// if the user staring this executable is the root user
