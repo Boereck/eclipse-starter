@@ -3,11 +3,11 @@
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at 
+ * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - Initial C implementation and documentation
  *     Max Bureck (Fraunhofer FOKUS)
@@ -136,21 +136,20 @@
 //!     config file. This is consistent with the java behaviour in the following case:
 //!     java -Dtest="one" -Dtest="two" ...  : test is set to the value "two"
 
-mod java;
-mod iter_ptr;
-mod native_arg_read;
 mod eclipse_params_parse;
-mod run;
+mod iter_ptr;
+mod java;
+mod native_arg_read;
 mod params;
+mod run;
 
-use eclipse_params_parse::parse_args;
 use eclipse_common::name_util::get_default_official_name_from_str;
-use std::str::FromStr;
+use eclipse_common::native_str::NativeString;
+use lazy_static::lazy_static;
+use native_arg_read::*;
 use std::os::raw::c_int;
 use std::path::PathBuf;
-use eclipse_common::native_str::NativeString;
-use native_arg_read::*;
-use lazy_static::lazy_static;
+use std::str::FromStr;
 use std::sync::Mutex;
 
 static MSG_SETTING_INITIAL_ARGS_FAIL: &str = "Accessing intial arguments failed.";
@@ -158,8 +157,8 @@ static LOCK_ERR_CODE: i32 = 2;
 
 #[derive(Default)]
 struct InitialArgs {
-    args: Vec<String>, 
-    library: PathBuf
+    args: Vec<String>,
+    library: PathBuf,
 }
 
 lazy_static! {
@@ -168,60 +167,19 @@ lazy_static! {
 
 #[cfg(not(target_os = "windows"))]
 #[no_mangle]
-pub unsafe extern fn run(args_size: c_int, args: *mut NativeString, vm_args: *mut NativeString) -> c_int {
-    // TODO convert to strings and call run_internal
-    0
-}
-
-#[cfg(target_os = "windows")]
-#[no_mangle]
 #[allow(non_snake_case)]
-pub unsafe extern fn runW(args_size: c_int, args: *mut NativeString, vm_args: *mut NativeString) -> c_int {
-    let arg_strings = utf16_str_array_to_string_vec(args, args_size as usize);
-    let vm_arg_strings = null_term_utf16_str_array_to_string_vec(vm_args);
-    run_internal(arg_strings, vm_arg_strings)
-}
-
-fn run_internal(args: Vec<String>, vm_args: Vec<String>) -> i32 {
-    let program = args.get(0).map(|s| s.as_ref()).unwrap_or_default();
-    
-    let mut args = parse_args(&args);
-    if args.name.is_none() {
-        let default_name = get_default_official_name_from_str(&program);
-        args.name = default_name;
-    }
-//    println!("{:#?}", args);
-
-    let lock = INITIAL_ARGS.lock();
-    let mut initial_args = match lock {
-        Ok(mut guard) => guard,
-        Err(e) => {
-            // TODO: if !args.suppress_errors call eclipse_common::messagebox::display_message
-            // We have no information about suppressing errors, let's just print to syserr
-            eprintln!("{}", MSG_SETTING_INITIAL_ARGS_FAIL);
-            eprintln!("{:?}", e);
-            return LOCK_ERR_CODE;
-        }
-    };
-    
-    // Free global memory
-    initial_args.args.clear();
-    initial_args.library = PathBuf::new();
-    0
-}
-
-
-#[cfg(not(target_os = "windows"))]
-#[no_mangle]
-#[allow(non_snake_case)]
-pub extern fn setInitialArgs(args_size: c_int, args: *mut NativeString, library: NativeString) {
+pub extern "C" fn setInitialArgs(args_size: c_int, args: *mut NativeString, library: NativeString) {
     // TODO: parse strings and call set_initial_args_internal
 }
 
 #[cfg(target_os = "windows")]
 #[no_mangle]
 #[allow(non_snake_case)]
-pub extern fn setInitialArgsW(args_size: c_int, args: *mut NativeString, library: NativeString) {
+pub extern "C" fn setInitialArgsW(
+    args_size: c_int,
+    args: *mut NativeString,
+    library: NativeString,
+) {
     let arg_strings = utf16_str_array_to_string_vec(args, args_size as usize);
     let library_str = utf16_to_string(&library).unwrap_or_default();
     let library_path = PathBuf::from_str(&library_str).unwrap_or_default();
@@ -233,8 +191,57 @@ fn set_initial_args_internal(args: Vec<String>, library: PathBuf) {
     if let Ok(mut guard) = lock {
         guard.args = args;
         guard.library = library;
-    } else { 
+    } else {
         // We have no information about suppressing errors, let's just print to syserr
         eprintln!("{}", MSG_SETTING_INITIAL_ARGS_FAIL);
     }
+}
+
+#[cfg(not(target_os = "windows"))]
+#[no_mangle]
+pub unsafe extern "C" fn run(
+    args_size: c_int,
+    args: *mut NativeString,
+    vm_args: *mut NativeString,
+) -> c_int {
+    // TODO convert to strings and call run_internal
+    0
+}
+
+#[cfg(target_os = "windows")]
+#[no_mangle]
+#[allow(non_snake_case)]
+pub unsafe extern "C" fn runW(
+    args_size: c_int,
+    args: *mut NativeString,
+    vm_args: *mut NativeString,
+) -> c_int {
+    let arg_strings = utf16_str_array_to_string_vec(args, args_size as usize);
+    let vm_arg_strings = null_term_utf16_str_array_to_string_vec(vm_args);
+    run_internal(arg_strings, vm_arg_strings)
+}
+
+fn run_internal(args: Vec<String>, vm_args: Vec<String>) -> i32 {
+    let program = args.get(0).map(|s| s.as_ref()).unwrap_or_default();
+    let mut args = parse_args(&args);
+    if args.name.is_none() {
+        let default_name = get_default_official_name_from_str(&program);
+        args.name = default_name;
+    }
+
+    let lock = INITIAL_ARGS.lock();
+    let mut initial_args = match lock {
+        Ok(guard) => guard,
+        Err(e) => {
+            // TODO: if !args.suppress_errors call eclipse_common::messagebox::display_message
+            // We have no information about suppressing errors, let's just print to syserr
+            eprintln!("{}", MSG_SETTING_INITIAL_ARGS_FAIL);
+            eprintln!("{:?}", e);
+            return LOCK_ERR_CODE;
+        }
+    };
+    // Free global memory
+    initial_args.args.clear();
+    initial_args.library = PathBuf::new();
+    0
 }
