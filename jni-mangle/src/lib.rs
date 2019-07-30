@@ -59,3 +59,5 @@ fn mangle_name(java_class: &str, fn_name: &str) -> String {
     // need the "1" prefix before the method name
     format!("Java_{}__1{}", java_class, fn_name)
 }
+
+// TODO: tests

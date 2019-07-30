@@ -143,6 +143,7 @@ mod native_arg_read;
 mod params;
 mod run;
 
+use crate::eclipse_params_parse::parse_args;
 use eclipse_common::name_util::get_default_official_name_from_str;
 use eclipse_common::native_str::NativeString;
 use lazy_static::lazy_static;
@@ -169,7 +170,10 @@ lazy_static! {
 #[no_mangle]
 #[allow(non_snake_case)]
 pub extern "C" fn setInitialArgs(args_size: c_int, args: *mut NativeString, library: NativeString) {
-    // TODO: parse strings and call set_initial_args_internal
+    let arg_strings = utf8_str_array_to_string_vec(args, args_size as usize);
+    let library_str = utf8_str_to_string(library).unwrap_or_default();
+    let library_path = PathBuf::from_str(&library_str).unwrap_or_default();
+    set_initial_args_internal(arg_strings, library_path)
 }
 
 #[cfg(target_os = "windows")]
@@ -204,8 +208,9 @@ pub unsafe extern "C" fn run(
     args: *mut NativeString,
     vm_args: *mut NativeString,
 ) -> c_int {
-    // TODO convert to strings and call run_internal
-    0
+    let arg_strings = utf8_str_array_to_string_vec(args, args_size as usize);
+    let vm_arg_strings = null_term_utf8_str_array_to_string_vec(vm_args);
+    run_internal(arg_strings, vm_arg_strings)
 }
 
 #[cfg(target_os = "windows")]
@@ -240,6 +245,9 @@ fn run_internal(args: Vec<String>, vm_args: Vec<String>) -> i32 {
             return LOCK_ERR_CODE;
         }
     };
+
+    // TODO: Port rest of run from C
+
     // Free global memory
     initial_args.args.clear();
     initial_args.library = PathBuf::new();

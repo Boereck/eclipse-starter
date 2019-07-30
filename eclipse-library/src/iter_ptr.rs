@@ -30,3 +30,5 @@ impl <T> Iterator for PtrIter<T>  {
         Some(result)
     }
 }
+
+// TODO: tests
