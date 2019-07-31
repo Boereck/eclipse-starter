@@ -30,13 +30,21 @@ use unicode_segmentation::UnicodeSegmentation;
 /// result will contain an IO error.
 pub fn read_ini(
     user_defined_config: &Option<String>,
-    exe_path: &PathBuf,
+    exe_path: &Path,
 ) -> Result<impl Iterator<Item = String>, Error> {
     let ini_path = if let Some(user_ini) = user_defined_config {
         PathBuf::from(user_ini)
     } else {
-        exe_to_ini_path(&exe_path)
+        exe_to_ini_path(exe_path)
     };
+    read_ini_lines(ini_path)
+}
+
+/// Reads all lines from the file located on the given `ini_path`
+/// Skipping commented lines (starting with '#'). If reading the file
+/// succeeds, the result will be an iterator over all lines, otherwise
+/// will return an IO error.
+pub fn read_ini_lines<P: AsRef<Path>>(ini_path: P) -> Result<impl Iterator<Item = String>, Error> {
     let ini_file = File::open(ini_path)?;
     let reader = BufReader::new(ini_file);
     // Only take successfuly read lines, omit IO errors
@@ -52,8 +60,8 @@ pub fn read_ini(
 /// and adds the file extension `ini`. If the filename starts with
 /// `c` on windows, the prefix is removed. The prefix is used
 /// for launchers creating a console window on the win32 windowsing system.
-fn exe_to_ini_path(exe_path: &PathBuf) -> PathBuf {
-    let mut ini_path = exe_path.clone();
+fn exe_to_ini_path(exe_path: &Path) -> PathBuf {
+    let mut ini_path = exe_path.to_owned();
     ini_path.set_extension("ini");
 
     if cfg!(target_os = "macos") {

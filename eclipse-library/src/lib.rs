@@ -137,14 +137,14 @@
 //!     java -Dtest="one" -Dtest="two" ...  : test is set to the value "two"
 
 mod eclipse_params_parse;
+mod errors;
 mod iter_ptr;
 mod java;
 mod native_arg_read;
+mod vm_args_read;
 mod params;
 mod run;
 
-use crate::eclipse_params_parse::parse_args;
-use eclipse_common::name_util::get_default_official_name_from_str;
 use eclipse_common::native_str::NativeString;
 use lazy_static::lazy_static;
 use native_arg_read::*;
@@ -227,13 +227,6 @@ pub unsafe extern "C" fn runW(
 }
 
 fn run_internal(args: Vec<String>, vm_args: Vec<String>) -> i32 {
-    let program = args.get(0).map(|s| s.as_ref()).unwrap_or_default();
-    let mut args = parse_args(&args);
-    if args.name.is_none() {
-        let default_name = get_default_official_name_from_str(&program);
-        args.name = default_name;
-    }
-
     let lock = INITIAL_ARGS.lock();
     let mut initial_args = match lock {
         Ok(guard) => guard,
@@ -246,10 +239,12 @@ fn run_internal(args: Vec<String>, vm_args: Vec<String>) -> i32 {
         }
     };
 
-    // TODO: Port rest of run from C
+    let result = run::run_framework(&args, &vm_args, &initial_args.args, &initial_args.library);
+
+    // TODO: turn result into return code and show error messages
 
     // Free global memory
-    initial_args.args.clear();
+    initial_args.args = Vec::new();
     initial_args.library = PathBuf::new();
     0
 }
