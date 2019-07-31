@@ -74,7 +74,7 @@ fn vm_args_from_launcher_ini_from_config(params: &EclipseParams, program: &Path)
     // https://bugs.eclipse.org/bugs/show_bug.cgi?id=509087
     // and
     // https://help.eclipse.org/index.jsp?topic=%2Forg.eclipse.platform.doc.isv%2Freference%2Fmisc%2Flauncher.html&cp=2_1_5_1
-    if !params.protect.map_or(false, |s| s == "base") {
+    if !&params.protect.map_or(false, |s| s == "base") {
         return Vec::new();
     }
 
