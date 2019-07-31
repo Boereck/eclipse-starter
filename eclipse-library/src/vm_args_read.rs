@@ -19,6 +19,8 @@
 use eclipse_common::ini_reader::read_ini_lines;
 use eclipse_common::ini_reader::read_ini;
 use std::path::Path;
+#[cfg(target_os = "macos")]
+use std::path::PathBuf;
 use crate::params::EclipseParams;
 use crate::errors::EclipseLibErr;
 
@@ -104,7 +106,7 @@ fn get_launcher_file_path_from_configuration(program: &Path) -> Option<PathBuf> 
 /// This method will never be called and is only here to make conditional compilation
 /// work in complete_vm_args
 #[cfg(not(target_os = "macos"))]
-fn vm_args_from_launcher_ini_from_config(_params: &EclipseParams, program: &Path) -> Vec<String> {
+fn vm_args_from_launcher_ini_from_config(_params: &EclipseParams, _program: &Path) -> Vec<String> {
     unimplemented!();
 }
 
