@@ -29,6 +29,9 @@ Just like the original C library build, the following environment variables can 
 
 However, these variables do not have to be set. The Rust build will select default values based on the build target.
 
+Note that the companion shared library name does not match the name of the current C build. Appearently Cargo's ability to
+name output dynamic libraries is limited. So the rename must be done in a separate post-build step.
+
 ### Windows
 
 To create a Windows launcher with resource information applied, a Windows SDK needs to be installed.

@@ -82,7 +82,7 @@ fn vm_args_from_launcher_ini_from_config(params: &EclipseParams, program: &str) 
         return Vec::new();
     };
 
-    if let Some(lines_iter) = read_ini_lines(ini_path) {
+    if let Some(lines_iter) = read_ini_lines(ini_path).ok() {
         vm_args_from_params(lines_iter).collect()
     } else {
         Vec::new()
