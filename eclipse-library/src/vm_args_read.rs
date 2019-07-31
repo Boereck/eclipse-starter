@@ -67,7 +67,7 @@ pub fn complete_vm_args<S: AsRef<str>>(
 
 #[inline] // only called in one place, won't lead to code bloat.
 #[cfg(target_os = "macos")]
-fn vm_args_from_launcher_ini_from_config(params: &EclipseParams, program: &str) -> Vec<String> {
+fn vm_args_from_launcher_ini_from_config(params: &EclipseParams, program: &Path) -> Vec<String> {
     // Unfortunately this functionality is not documented, see:
     // https://bugs.eclipse.org/bugs/show_bug.cgi?id=509087
     // and
