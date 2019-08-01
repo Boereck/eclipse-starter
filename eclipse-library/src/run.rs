@@ -16,6 +16,7 @@ use crate::eclipse_params_parse::parse_args;
 use crate::errors::EclipseLibErr;
 use crate::params::EclipseParams;
 use crate::vm_args_read::complete_vm_args;
+use crate::vm_lookup::{JvmLaunchMode, determine_vm};
 use eclipse_common::name_util::get_default_official_name_from_str;
 use std::path::{Path, PathBuf};
 
@@ -30,7 +31,7 @@ pub fn run_framework<S: AsRef<str>>(
     let mut parsed_args = parse_args(args);
 
     let program = args.get(0).map(|s| s.as_ref()).unwrap_or_default();
-    let program_path = PathBuf::from(program);
+    let program_path = Path::new(program);
     if parsed_args.name.is_none() {
         let default_name = get_default_official_name_from_str(&program);
         parsed_args.name = default_name;
@@ -50,9 +51,9 @@ pub fn run_framework<S: AsRef<str>>(
     let program_dir = program_path.parent()
         .ok_or(EclipseLibErr::HomeNotFound)?;
 
-    // TODO: handle VM args
     let complete_vm_args = complete_vm_args(vm_args, &parsed_args, &program_path);
 
+    determine_vm(&parsed_args, program_dir)?;
     // TODO: determine the vm to use.
     // TODO: find startup jar
 
@@ -91,3 +92,4 @@ fn process_default_action<S: AsRef<str>>(
         .collect();
     params.openfile = Some(files);
 }
+

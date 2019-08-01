@@ -14,7 +14,7 @@
 
 //! This module provides functionality to provide  
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use unicode_segmentation::UnicodeSegmentation;
 
 /// Determine the default official application name
@@ -31,8 +31,8 @@ pub fn get_default_official_name() -> Option<String> {
 }
 
 pub fn get_default_official_name_from_str(exe_path: &str) -> Option<String> {
-    let exe_path = PathBuf::from(exe_path);
-    get_default_official_name_from_path(&exe_path)
+    let exe_path = Path::new(exe_path);
+    get_default_official_name_from_path(exe_path)
 }
 
 pub fn get_default_official_name_from_path(exe_path: &Path) -> Option<String> {

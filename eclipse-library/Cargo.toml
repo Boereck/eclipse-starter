@@ -36,3 +36,10 @@ jni = "0.13.0"
 lazy_static = "1.3.0"
 eclipse-common = { path = "../eclipse-common" }
 jni-mangle = { path = "../jni-mangle" }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+winapi = { version = "0.3.7", features = ["wincon", "winreg"]}
+
+[features]
+# When selected will not try by default to start JVM from JNI library, but will call exe
+default_java_exec = []

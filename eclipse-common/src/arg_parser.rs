@@ -85,6 +85,17 @@ pub enum OptionalParam {
     Set(String),
 }
 
+impl OptionalParam {
+    
+    /// Returns `false` if self is `OptionalParam::NotSet`, `true` otherwise
+    pub fn is_set(&self) -> bool {
+        match self {
+            OptionalParam::NotSet => false,
+            _ => true,
+        }
+    }
+}
+
 impl Default for OptionalParam {
     fn default() -> Self {
         OptionalParam::NotSet

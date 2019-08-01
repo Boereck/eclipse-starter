@@ -40,7 +40,7 @@ pub fn has_parent(path: &Path) -> bool {
 }
 
 /// Checks if the given `path` has the file extension `exe`
-pub fn has_extension_exe(path: &PathBuf) -> bool {
+pub fn has_extension_exe(path: &Path) -> bool {
     path.extension().filter(|ext| *ext == "exe").is_some()
 }
 
@@ -91,6 +91,35 @@ pub fn find_file(location: &Path, name_prefix: &str) -> Option<PathBuf> {
             get_version(compare_str)
         })
         .map(|(_, entry)| entry.path())
+}
+
+/// This macro creates a `std::path::PathBuf`, adds all elements
+/// passed to the macro to the buffer and returns it in the end.
+/// 
+/// Example:
+/// ```
+/// use eclipse_common::path_buf;
+/// 
+/// let mut foobar1 = std::path::PathBuf::from("foo");
+/// foobar1.push("bar");
+/// 
+/// let foobar2 = path_buf!["foo", "bar",];
+/// 
+/// assert_eq!(foobar1, foobar2);
+/// ```
+/// 
+/// This macro is usefull when `let p: PathBuf = [a,b].iter().collect()`
+/// does not work, because `a` and `b` have different types, so have
+/// different sizes.
+#[macro_export]
+macro_rules! path_buf {
+    ($first:expr, $($x:expr,)+) => (
+        {
+            let mut buf = std::path::PathBuf::from($first);
+            $(buf.push($x);)*
+            buf
+        }
+    );
 }
 
 /// Returns an option holding the tuple of the given `entry` and it's file name

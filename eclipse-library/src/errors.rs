@@ -19,5 +19,6 @@
 /// a variant of this type.
 #[derive(Debug)]
 pub enum EclipseLibErr {
-    HomeNotFound
+    HomeNotFound,
+    JvmNotFound(String),
 }

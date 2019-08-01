@@ -12,10 +12,17 @@
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
 
+//! This module allows (endless) iteration over raw pointers, 
+//! which will move the pointer forward in steps of the size of the element pointed to.
+
 use std::ptr;
 
 pub struct PtrIter<T>(*mut T);
 
+/// Creates an iterator, starting at the element the given `ptr`
+/// is pointed to. The returned iterator is unbound simply moving
+/// the pointer to the next �T� element in memory.
+/// 
 /// Warning: do not use for zero-sized types
 pub fn iter<T>(ptr: *mut T) -> PtrIter<T> {
     PtrIter(ptr)

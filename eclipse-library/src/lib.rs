@@ -144,6 +144,7 @@ mod native_arg_read;
 mod vm_args_read;
 mod params;
 mod run;
+mod vm_lookup;
 
 use eclipse_common::native_str::NativeString;
 use lazy_static::lazy_static;
@@ -172,7 +173,7 @@ lazy_static! {
 pub extern "C" fn setInitialArgs(args_size: c_int, args: *mut NativeString, library: NativeString) {
     let arg_strings = utf8_str_array_to_string_vec(args, args_size as usize);
     let library_str = utf8_str_to_string(library).unwrap_or_default();
-    let library_path = PathBuf::from_str(&library_str).unwrap_or_default();
+    let library_path = PathBuf::from(&library_str);
     set_initial_args_internal(arg_strings, library_path)
 }
 
@@ -186,7 +187,7 @@ pub extern "C" fn setInitialArgsW(
 ) {
     let arg_strings = utf16_str_array_to_string_vec(args, args_size as usize);
     let library_str = utf16_to_string(&library).unwrap_or_default();
-    let library_path = PathBuf::from_str(&library_str).unwrap_or_default();
+    let library_path = PathBuf::from(&library_str);
     set_initial_args_internal(arg_strings, library_path)
 }
 
