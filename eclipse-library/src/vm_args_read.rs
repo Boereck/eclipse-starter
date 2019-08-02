@@ -79,7 +79,7 @@ fn vm_args_from_launcher_ini_from_config(params: &EclipseParams, program: &Path)
     }
 
     let ini_path = if let Some(ini) = get_launcher_file_path_from_configuration(program) {
-        Path::new(ini)
+        ini
     } else {
         return Vec::new();
     };
