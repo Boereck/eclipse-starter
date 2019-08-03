@@ -16,10 +16,12 @@
 #[cfg_attr(target_os = "linux", path = "linux.rs")]
 #[cfg_attr(target_os = "windows", path = "windows.rs")]
 mod os;
+mod common;
 
 use std::path::{Path, PathBuf};
 use crate::params::EclipseParams;
 use crate::errors::EclipseLibErr;
+use common::is_vm_library_ext;
 use eclipse_common::path_util::check_path;
 use eclipse_common::exe_util::find_program;
 use eclipse_common::path_buf;
@@ -36,9 +38,9 @@ pub fn determine_vm(params: &EclipseParams, program_dir: &Path) -> Result<JvmLau
 
         use VmType::*; 
         match vm_type {
-            VM_DIRECTORY => get_vm_from_dir(vm_name, program_dir),
-            VM_EE_PROPS => get_ee_vm(vm_name),
-            VM_LIBRARY => get_vm_library(vm_name),
+            VmDirectory => get_vm_from_dir(vm_name, program_dir, params),
+            VmEeProps => get_ee_vm(vm_name),
+            VmLibrary => get_vm_library(vm_name),
             _ => get_vm_exe(vm_name),
         }
     } else {
@@ -46,13 +48,13 @@ pub fn determine_vm(params: &EclipseParams, program_dir: &Path) -> Result<JvmLau
     }
 }
 
-fn get_vm_from_dir(vm_name: &str, program_dir: &Path) -> Result<JvmLaunchMode, EclipseLibErr> {
+fn get_vm_from_dir(vm_name: &str, program_dir: &Path, params: &EclipseParams) -> Result<JvmLaunchMode, EclipseLibErr> {
     // look for default.ee
-    let mut vm_path = path_buf![vm_name, DEFAULT_EE,];
+    let vm_path = path_buf![vm_name, DEFAULT_EE,];
     let vm_program = find_program(&vm_path);
 
     if let Some(vm_program_path) = vm_program {
-        let launch_mode = launch_mode_from_jvm_exe_path(vm_program_path, program_dir);
+        let launch_mode = launch_mode_from_jvm_exe_path(vm_program_path, program_dir, params);
         Ok(launch_mode)
     } else {
         find_jvm(false)
@@ -72,38 +74,34 @@ fn get_vm_exe(vm_name: &str) -> Result<JvmLaunchMode, EclipseLibErr> {
     unimplemented!()
 }
 
-fn launch_mode_from_jvm_exe_path(jvm_exe_path: PathBuf, program_dir: &Path) -> JvmLaunchMode {
+fn launch_mode_from_jvm_exe_path(jvm_exe_path: PathBuf, program_dir: &Path, params: &EclipseParams) -> JvmLaunchMode {
     if cfg!(not(feature = "default_java_exec")) {
-        if let Some(jvm_lib_path) = os::find_vm_library(&jvm_exe_path, program_dir) {
-            return JvmLaunchMode::LAUNCH_JNI {
+        if let Some(jvm_lib_path) = os::find_vm_library(&jvm_exe_path, program_dir, params) {
+            return JvmLaunchMode::LaunchJni {
                 jni_lib: jvm_lib_path,
             }
         }
     }
-    JvmLaunchMode::LAUNCH_EXE {
+    JvmLaunchMode::LaunchExe {
         exe: jvm_exe_path,
     }
 }
 
-#[allow(clippy::if_same_then_else)] // concatenating these large expressions with an || is not readable
 fn determine_provided_vm_type(vm_path: &Path) -> VmType {
     use VmType::*; 
 
     if vm_path.is_dir() {
-        return VM_DIRECTORY;
+        return VmDirectory;
     }
 
     let ext = vm_path.extension().unwrap_or_default().to_str().unwrap_or_default();
-    let is_win = cfg!(target_os = "windows");
 
-    if is_win && ext == "dll" {
-        VM_LIBRARY
-    } else if (!is_win) && (ext == "so" || ext == "jnilib" || ext == "dylib") {
-        VM_LIBRARY
+    if is_vm_library_ext(ext) {
+        VmLibrary
     } else if ext == "ee" {
-        VM_EE_PROPS
+        VmEeProps
     } else {
-        VmType::VM_OTHER
+        VmType::VmOther
     }
 }
 
@@ -113,14 +111,14 @@ fn find_jvm(user_specified_vm: bool) -> Result<JvmLaunchMode, EclipseLibErr> {
 }
 
 pub enum JvmLaunchMode {
-    LAUNCH_JNI {jni_lib: PathBuf},
-    LAUNCH_EXE {exe: PathBuf}
+    LaunchJni {jni_lib: PathBuf},
+    LaunchExe {exe: PathBuf}
 }
 
 enum VmType {
-    VM_DIRECTORY,
-    VM_NOTHING,
-    VM_LIBRARY,
-    VM_EE_PROPS,
-    VM_OTHER,
+    VmDirectory,
+    VmNothing,
+    VmLibrary,
+    VmEeProps,
+    VmOther,
 }

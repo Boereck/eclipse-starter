@@ -140,7 +140,7 @@ mod eclipse_params_parse;
 mod errors;
 mod iter_ptr;
 mod java;
-mod native_arg_read;
+mod native_str_read;
 mod vm_args_read;
 mod params;
 mod run;
@@ -148,7 +148,7 @@ mod vm_lookup;
 
 use eclipse_common::native_str::NativeString;
 use lazy_static::lazy_static;
-use native_arg_read::*;
+use native_str_read::*;
 use std::os::raw::c_int;
 use std::path::PathBuf;
 use std::str::FromStr;

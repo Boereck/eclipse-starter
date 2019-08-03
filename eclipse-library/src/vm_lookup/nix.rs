@@ -18,6 +18,6 @@
 
 use std::path::{Path, PathBuf};
 
-pub fn find_vm_library(exe_path: &Path, exe_dir: &Path) -> Option<PathBuf> {
+pub fn find_vm_library(exe_path: &Path, exe_dir: &Path, params: &EclipseParams) -> Option<PathBuf> {
     unimplemented!();
 }

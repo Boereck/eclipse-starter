@@ -13,6 +13,7 @@
  *******************************************************************************/
 
 use crate::params::EclipseParams;
+use super::common::{is_vm_library, get_vm_library_search_path};
 use eclipse_common::native_str::to_native_str;
 use eclipse_common::path_buf;
 use std::ffi::OsString;
@@ -55,10 +56,10 @@ pub fn get_default_vm(params: &EclipseParams) -> &'static str {
     }
 }
 
-pub fn find_vm_library(vm_exe_path: &Path, exe_dir: &Path) -> Option<PathBuf> {
+pub fn find_vm_library(vm_exe_path: &Path, exe_dir: &Path, params: &EclipseParams) -> Option<PathBuf> {
     let lib = find_lib(vm_exe_path, exe_dir);
     if let Some(lib_path) = lib.as_ref() {
-        adjust_search_path(lib_path);
+        adjust_search_path(lib_path, params);
     }
     lib
 }
@@ -167,15 +168,44 @@ fn find_lib_from_registry() -> Option<PathBuf> {
     None
 }
 
-fn check_vm_registry_key(jre_key: HKEY, key_name_buf: [u16; MAX_PATH]) -> Option<PathBuf> {
-    unimplemented!()
+/// Read the subKeyName subKey of jre_key and look to see if it has a value 
+/// "RuntimeLib" which points to a jvm library we can use.
+///
+/// Does not close jre_key
+fn check_vm_registry_key(jre_key: HKEY, mut sub_key_name: [u16; MAX_PATH]) -> Option<PathBuf> {
+
+    let sub_key_name_ptr = sub_key_name.as_mut_ptr();
+    let mut sub_key: HKEY = std::ptr::null_mut();
+    let success = (ERROR_SUCCESS as LSTATUS);
+    let null_lpdword: LPDWORD = std::ptr::null_mut();
+    let mut value = [0u16; MAX_PATH];
+    let mut length = MAX_PATH as DWORD;
+    let mut value_ptr = value.as_mut_ptr() as LPBYTE;
+
+    let open_key_result = unsafe {
+        RegOpenKeyExW(jre_key, sub_key_name_ptr, 0, KEY_READ, &mut sub_key)
+    };
+    if open_key_result == success {
+        let (_runtime_lib_vec, runtime_lib_str) = to_native_str("RuntimeLib");
+        let query_result = unsafe {
+            RegQueryValueExW(sub_key, runtime_lib_str, null_lpdword, null_lpdword, value_ptr, &mut length)
+        };
+        if query_result == success {
+            let osstr = OsString::from_wide(&value[..(length as usize)]);
+            if let Some(path_str) = osstr.to_str() {
+                let path = Path::new(path_str);
+                if path.exists() {
+                    return Some(path.to_path_buf());
+                }
+            }
+        }
+    }
+    None
 }
 
-fn is_vm_library(path: &Path) -> bool {
-    unimplemented!()
-}
-
-fn adjust_search_path(lib_path: &Path) {
+fn adjust_search_path(lib_path: &Path, params: &EclipseParams) {
+    let paths = get_vm_library_search_path(lib_path, params, None);
+    
     unimplemented!()
 }
 

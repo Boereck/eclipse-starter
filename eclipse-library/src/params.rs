@@ -40,3 +40,11 @@ pub struct EclipseParams {
     pub perm_gen: bool,
     pub gtk_version: Option<String>,
 }
+
+#[derive(Default, Debug)]
+pub struct EclipseEEProps {
+    pub ee_executable: Option<String>,
+    pub ee_console: Option<String>,
+    pub ee_vm_libary: Option<String>,
+    pub ee_lib_path: Option<Vec<String>>,
+}
