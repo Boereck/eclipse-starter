@@ -17,7 +17,7 @@
 
 
 use std::path::{Path, PathBuf};
-crate::params::EclipseParams;
+use crate::params::EclipseParams;
 
 pub fn find_vm_library(exe_path: &Path, exe_dir: &Path, params: &EclipseParams) -> Option<PathBuf> {
     unimplemented!();
