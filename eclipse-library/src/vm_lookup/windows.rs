@@ -12,11 +12,11 @@
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
 
+use super::common::{contains_paths, get_vm_library_search_path, is_vm_library};
 use crate::params::EclipseParams;
-use super::common::{is_vm_library, get_vm_library_search_path, contains_paths};
 use eclipse_common::native_str::to_native_str;
-use eclipse_common::path_util::PATHS_SEPARATOR;
 use eclipse_common::path_buf;
+use eclipse_common::path_util::PATHS_SEPARATOR;
 use std::ffi::OsString;
 use std::os::windows::prelude::*;
 use std::path::{Path, PathBuf};
@@ -60,7 +60,11 @@ pub fn get_default_vm(params: &EclipseParams) -> &'static str {
 
 /// Finds the path to the JVM JNI library from the `vm_exe_path`, which can either
 /// point to the java executable, or to the library itself.
-pub fn find_vm_library(vm_exe_path: &Path, exe_dir: &Path, params: &EclipseParams) -> Option<PathBuf> {
+pub fn find_vm_library(
+    vm_exe_path: &Path,
+    exe_dir: &Path,
+    params: &EclipseParams,
+) -> Option<PathBuf> {
     let lib = find_lib(vm_exe_path, exe_dir);
     if let Some(lib_path) = lib.as_ref() {
         adjust_search_path(lib_path, params);
@@ -100,9 +104,16 @@ fn find_lib(vm_exe_path: &Path, exe_dir: &Path) -> Option<PathBuf> {
 }
 
 fn find_lib_from_registry() -> Option<PathBuf> {
+    let reg_key_name = r"Software\JavaSoft\Java Runtime Environment";
+    // Backup key used by installer of AdoptOpenJDK
+    let backup_reg_key_name = r"Software\JavaSoft\JRE";
+    find_lib_from_registry_entry(reg_key_name)
+        .or_else(|| find_lib_from_registry_entry(backup_reg_key_name))
+}
+
+fn find_lib_from_registry_entry(reg_key_path: &str) -> Option<PathBuf> {
     // Not found yet, try the registry, we will use the first vm >= 1.6
-    let (_key_name_vec, jre_key_name) =
-        to_native_str(r"Software\JavaSoft\Java Runtime Environment");
+    let (_key_name_vec, jre_key_name) = to_native_str(reg_key_path);
     let mut jre_key: HKEY = std::ptr::null_mut();
     let success = ERROR_SUCCESS as LSTATUS;
 
@@ -172,12 +183,11 @@ fn find_lib_from_registry() -> Option<PathBuf> {
     None
 }
 
-/// Read the subKeyName subKey of jre_key and look to see if it has a value 
+/// Read the subKeyName subKey of jre_key and look to see if it has a value
 /// "RuntimeLib" which points to a jvm library we can use.
 ///
 /// Does not close jre_key
 fn check_vm_registry_key(jre_key: HKEY, mut sub_key_name: [u16; MAX_PATH]) -> Option<PathBuf> {
-
     let sub_key_name_ptr = sub_key_name.as_mut_ptr();
     let mut sub_key: HKEY = std::ptr::null_mut();
     let success = ERROR_SUCCESS as LSTATUS;
@@ -186,13 +196,19 @@ fn check_vm_registry_key(jre_key: HKEY, mut sub_key_name: [u16; MAX_PATH]) -> Op
     let mut length = MAX_PATH as DWORD;
     let value_ptr = value.as_mut_ptr() as LPBYTE;
 
-    let open_key_result = unsafe {
-        RegOpenKeyExW(jre_key, sub_key_name_ptr, 0, KEY_READ, &mut sub_key)
-    };
+    let open_key_result =
+        unsafe { RegOpenKeyExW(jre_key, sub_key_name_ptr, 0, KEY_READ, &mut sub_key) };
     if open_key_result == success {
         let (_runtime_lib_vec, runtime_lib_str) = to_native_str("RuntimeLib");
         let query_result = unsafe {
-            RegQueryValueExW(sub_key, runtime_lib_str, null_lpdword, null_lpdword, value_ptr, &mut length)
+            RegQueryValueExW(
+                sub_key,
+                runtime_lib_str,
+                null_lpdword,
+                null_lpdword,
+                value_ptr,
+                &mut length,
+            )
         };
         // length is in byte, since wide chars are 2 byte, we devide by 2
         // the buffer size also includes the trailing 0, so we substract 1
@@ -213,7 +229,6 @@ fn check_vm_registry_key(jre_key: HKEY, mut sub_key_name: [u16; MAX_PATH]) -> Op
 // TODO: is this generic enough to be moved to common?
 fn adjust_search_path(lib_path: &Path, params: &EclipseParams) {
     let paths = get_vm_library_search_path(lib_path, params, None);
-    
     // Add current working directory to end of search path
     let cwd = std::env::current_dir().unwrap_or_default();
     let (need_adjust, mut path) = if let Ok(path) = std::env::var("PATH") {
@@ -223,19 +238,27 @@ fn adjust_search_path(lib_path: &Path, params: &EclipseParams) {
     } else {
         (true, String::new())
     };
-    
     if need_adjust {
-        let paths_str: String = paths.iter().filter_map(|p| {
-            let mut s = p.to_str()?.to_string();
-            s.push(PATHS_SEPARATOR);
-            s.into()
-        }).collect();
+        let paths_str: String = paths
+            .iter()
+            .filter_map(|p| {
+                let mut s = p.to_str()?.to_string();
+                s.push(PATHS_SEPARATOR);
+                s.into()
+            })
+            .collect();
         if !path.ends_with(PATHS_SEPARATOR) {
             path.push(PATHS_SEPARATOR);
         }
 
         // We ensured above that paths_str and path end with a PATHS_SEPARATOR
-        let new_path = format!("{}{}{}{}", paths_str, path, cwd.to_string_lossy(), PATHS_SEPARATOR);
+        let new_path = format!(
+            "{}{}{}{}",
+            paths_str,
+            path,
+            cwd.to_string_lossy(),
+            PATHS_SEPARATOR
+        );
         std::env::set_var("PATH", new_path);
     }
 }

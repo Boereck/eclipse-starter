@@ -13,9 +13,9 @@
  *******************************************************************************/
 
 use crate::params::{EclipseEEProps, EclipseParams};
-use std::path::{Path, PathBuf};
 use eclipse_common::path_buf;
 use eclipse_common::path_util::PATHS_SEPARATOR;
+use std::path::{Path, PathBuf};
 
 pub fn is_vm_library(path: &Path) -> bool {
     let ext = if let Some(ext) = path.extension() {
@@ -55,7 +55,7 @@ pub fn get_vm_library_search_path(
         if let Some(grandparent) = parent.parent() {
             // trying grandparent/lib/arch
             let vm_arch = get_vm_arch(params);
-            let path = path_buf![grandparent,"lib", vm_arch,];
+            let path = path_buf![grandparent, "lib", vm_arch,];
             if path.exists() {
                 paths.push(path);
             }
@@ -63,7 +63,6 @@ pub fn get_vm_library_search_path(
     }
     paths
 }
-
 
 fn get_vm_arch(params: &EclipseParams) -> &str {
     let os_str: &str = if let Some(os_str) = &params.os {
@@ -80,7 +79,7 @@ fn get_vm_arch(params: &EclipseParams) -> &str {
 
 const DIR_PATH_SEPARATOR: [char; 2] = [std::path::MAIN_SEPARATOR, PATHS_SEPARATOR];
 
-/// `path` contains a pathSeparator separated list of paths, check 
+/// `path` contains a pathSeparator separated list of paths, check
 /// that it contains all the `paths` given.  Each path is expected to be
 /// terminated with a pathSeparator character.
 pub fn contains_paths<P: AsRef<Path>>(path: &str, paths: &[P]) -> bool {
@@ -98,11 +97,13 @@ pub fn contains_paths<P: AsRef<Path>>(path: &str, paths: &[P]) -> bool {
         };
         if let Some(index) = path.find(s) {
             let (before, found_and_rest) = path.split_at(index);
-            let after = &found_and_rest[s.len() ..];
+            let after = &found_and_rest[s.len()..];
 
             // There shall be PATHS_SEPARATOR before and after path. The end may have an additional path separator before the PATHS_SEPARATOR
             let dir_path_sep: String = DIR_PATH_SEPARATOR.iter().collect();
-            if !(before.is_empty() || before.ends_with(PATHS_SEPARATOR)) || !(after.starts_with(PATHS_SEPARATOR) || after.starts_with(&dir_path_sep)) {
+            if !(before.is_empty() || before.ends_with(PATHS_SEPARATOR))
+                || !(after.starts_with(PATHS_SEPARATOR) || after.starts_with(&dir_path_sep))
+            {
                 return false;
             }
         } else {
@@ -115,9 +116,9 @@ pub fn contains_paths<P: AsRef<Path>>(path: &str, paths: &[P]) -> bool {
 
 #[cfg(test)]
 mod test {
-    use std::path::Path;
     use super::contains_paths;
     use eclipse_common::path_util::PATHS_SEPARATOR;
+    use std::path::Path;
 
     #[test]
     fn test_contains_paths_first_path() {

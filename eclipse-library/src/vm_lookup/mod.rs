@@ -99,11 +99,17 @@ fn get_ee_vm<P: AsRef<Path>>(vm_name: P) -> Result<JvmLaunchMode, EclipseLibErr>
     unimplemented!()
 }
 
-fn get_vm_library(vm_name: &str, lib_path: &Path, program_dir: &Path, params: &EclipseParams) -> Result<JvmLaunchMode, EclipseLibErr> {
+fn get_vm_library(
+    vm_name: &str,
+    lib_path: &Path,
+    program_dir: &Path,
+    params: &EclipseParams,
+) -> Result<JvmLaunchMode, EclipseLibErr> {
     // TODO: on macos skipJava9ParamRemoval = 1 ??
-    let lib_path_resolved = find_program(lib_path).and_then(|path| os::find_vm_library(&path, program_dir, params));
-    let result_lib_path = lib_path_resolved.ok_or_else(||{ 
-        let lookup_path = if !vm_name.contains(std::path::MAIN_SEPARATOR){
+    let lib_path_resolved =
+        find_program(lib_path).and_then(|path| os::find_vm_library(&path, program_dir, params));
+    let result_lib_path = lib_path_resolved.ok_or_else(|| {
+        let lookup_path = if !vm_name.contains(std::path::MAIN_SEPARATOR) {
             Path::new(vm_name)
         } else {
             lib_path
@@ -226,9 +232,7 @@ fn find_jvm(
     if cfg!(target_os = "windows") && java_vm_result.is_err() {
         let lib_result = os::find_vm_library(Path::new(""), program_dir, params);
         if let Some(lib_path) = lib_result {
-            let result =  JvmLaunchMode::LaunchJni {
-                jni_lib: lib_path,
-            };
+            let result = JvmLaunchMode::LaunchJni { jni_lib: lib_path };
             return Ok(result);
         }
     }
