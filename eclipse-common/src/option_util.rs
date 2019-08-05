@@ -12,15 +12,9 @@
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
 
-//! This module is empty and just exporting it's sub-modules.
-//! The sub-modules provide common functionality used by the
-//! `eclipse-launcher` and `eclipse-library` projects.
-
-pub mod arg_parser;
-pub mod path_util;
-pub mod name_util;
-pub mod exe_util;
-pub mod ini_reader;
-pub mod native_str;
-pub mod messagebox;
-pub mod option_util;
+/// Turns an `&Option<String>` into an `Option<&str>`; this can
+/// be useful if the String must not be removed from the soure optional
+/// or if an optional should be compared to a static `&str`.
+pub fn opt_str(opt: &Option<String>) -> Option<&str> {
+    opt.as_ref().map(String::as_str)
+}

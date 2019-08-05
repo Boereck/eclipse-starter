@@ -33,6 +33,7 @@ mod params;
 
 use eclipse_common::arg_parser::*;
 use eclipse_common::ini_reader::*;
+use eclipse_common::option_util::opt_str;
 use eclipse_common::name_util::get_default_official_name;
 use eclipse_common::messagebox::display_message;
 use eclipse_common::path_util::strip_unc_prefix;
@@ -234,13 +235,6 @@ fn set_if_none<T>(target: &mut Option<T>, from: Option<T>) {
 /// if the user staring this executable is the root user
 fn perform_root_check(params: &EclipseLauncherParams) -> bool {
     opt_str(&params.protect) == Some(ROOT)
-}
-
-/// Turns an `&Option<String>` into an `Option<&str>`; this can
-/// be useful if the String must not be removed from the soure optional
-/// or if an optional should be compared to a static `&str`.
-fn opt_str(opt: &Option<String>) -> Option<&str> {
-    opt.as_ref().map(String::as_str)
 }
 
 /// No root-check support for Windows

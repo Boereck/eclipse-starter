@@ -151,7 +151,6 @@ use lazy_static::lazy_static;
 use native_str_read::*;
 use std::os::raw::c_int;
 use std::path::PathBuf;
-use std::str::FromStr;
 use std::sync::Mutex;
 
 static MSG_SETTING_INITIAL_ARGS_FAIL: &str = "Accessing intial arguments failed.";
@@ -243,6 +242,9 @@ fn run_internal(args: Vec<String>, vm_args: Vec<String>) -> i32 {
     let result = run::run_framework(&args, &vm_args, &initial_args.args, &initial_args.library);
 
     // TODO: turn result into return code and show error messages
+    if let Err(e) = result {
+        eprintln!("{:#?}", e);
+    }
 
     // Free global memory
     initial_args.args = Vec::new();

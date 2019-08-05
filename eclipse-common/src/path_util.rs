@@ -21,6 +21,17 @@ use std::fs::DirEntry;
 use std::path::Path;
 use std::path::PathBuf;
 
+// It seems there is no constant for paths separator in the rust standard library,
+// so we define this character for ourselves.
+
+/// Separator between multiple file system paths.
+#[cfg(target_os = "windows")]
+pub const PATHS_SEPARATOR: char = ';';
+
+/// Separator between multiple file system paths.
+#[cfg(not(target_os = "windows"))]
+pub const PATHS_SEPARATOR: char = ':';
+
 /// On Windows this method strips the leading "\\?\"
 /// sequence, since the launcher library does not seem to be
 /// able to cope with Windows UNC file names

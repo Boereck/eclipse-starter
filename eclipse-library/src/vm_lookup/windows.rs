@@ -13,8 +13,9 @@
  *******************************************************************************/
 
 use crate::params::EclipseParams;
-use super::common::{is_vm_library, get_vm_library_search_path};
+use super::common::{is_vm_library, get_vm_library_search_path, contains_paths};
 use eclipse_common::native_str::to_native_str;
+use eclipse_common::path_util::PATHS_SEPARATOR;
 use eclipse_common::path_buf;
 use std::ffi::OsString;
 use std::os::windows::prelude::*;
@@ -48,6 +49,7 @@ const JVM_LOCATIONS: [&str; 10] = [
     r"..\jre\bin\jrockit",
 ];
 
+#[inline]
 pub fn get_default_vm(params: &EclipseParams) -> &'static str {
     if console_needed(params) {
         CONSOLE_VM
@@ -56,6 +58,8 @@ pub fn get_default_vm(params: &EclipseParams) -> &'static str {
     }
 }
 
+/// Finds the path to the JVM JNI library from the `vm_exe_path`, which can either
+/// point to the java executable, or to the library itself.
 pub fn find_vm_library(vm_exe_path: &Path, exe_dir: &Path, params: &EclipseParams) -> Option<PathBuf> {
     let lib = find_lib(vm_exe_path, exe_dir);
     if let Some(lib_path) = lib.as_ref() {
@@ -100,7 +104,7 @@ fn find_lib_from_registry() -> Option<PathBuf> {
     let (_key_name_vec, jre_key_name) =
         to_native_str(r"Software\JavaSoft\Java Runtime Environment");
     let mut jre_key: HKEY = std::ptr::null_mut();
-    let success = (ERROR_SUCCESS as LSTATUS);
+    let success = ERROR_SUCCESS as LSTATUS;
 
     let open_result =
         unsafe { RegOpenKeyExW(HKEY_LOCAL_MACHINE, jre_key_name, 0, KEY_READ, &mut jre_key) };
@@ -176,11 +180,11 @@ fn check_vm_registry_key(jre_key: HKEY, mut sub_key_name: [u16; MAX_PATH]) -> Op
 
     let sub_key_name_ptr = sub_key_name.as_mut_ptr();
     let mut sub_key: HKEY = std::ptr::null_mut();
-    let success = (ERROR_SUCCESS as LSTATUS);
+    let success = ERROR_SUCCESS as LSTATUS;
     let null_lpdword: LPDWORD = std::ptr::null_mut();
     let mut value = [0u16; MAX_PATH];
     let mut length = MAX_PATH as DWORD;
-    let mut value_ptr = value.as_mut_ptr() as LPBYTE;
+    let value_ptr = value.as_mut_ptr() as LPBYTE;
 
     let open_key_result = unsafe {
         RegOpenKeyExW(jre_key, sub_key_name_ptr, 0, KEY_READ, &mut sub_key)
@@ -190,8 +194,11 @@ fn check_vm_registry_key(jre_key: HKEY, mut sub_key_name: [u16; MAX_PATH]) -> Op
         let query_result = unsafe {
             RegQueryValueExW(sub_key, runtime_lib_str, null_lpdword, null_lpdword, value_ptr, &mut length)
         };
+        // length is in byte, since wide chars are 2 byte, we devide by 2
+        // the buffer size also includes the trailing 0, so we substract 1
+        let count = ((length / 2) - 1) as usize;
         if query_result == success {
-            let osstr = OsString::from_wide(&value[..(length as usize)]);
+            let osstr = OsString::from_wide(&value[..count]);
             if let Some(path_str) = osstr.to_str() {
                 let path = Path::new(path_str);
                 if path.exists() {
@@ -203,10 +210,34 @@ fn check_vm_registry_key(jre_key: HKEY, mut sub_key_name: [u16; MAX_PATH]) -> Op
     None
 }
 
+// TODO: is this generic enough to be moved to common?
 fn adjust_search_path(lib_path: &Path, params: &EclipseParams) {
     let paths = get_vm_library_search_path(lib_path, params, None);
     
-    unimplemented!()
+    // Add current working directory to end of search path
+    let cwd = std::env::current_dir().unwrap_or_default();
+    let (need_adjust, mut path) = if let Ok(path) = std::env::var("PATH") {
+        let current = vec![&cwd];
+        let need_adjust = !contains_paths(&path, &paths) || !contains_paths(&path, &current);
+        (need_adjust, path)
+    } else {
+        (true, String::new())
+    };
+    
+    if need_adjust {
+        let paths_str: String = paths.iter().filter_map(|p| {
+            let mut s = p.to_str()?.to_string();
+            s.push(PATHS_SEPARATOR);
+            s.into()
+        }).collect();
+        if !path.ends_with(PATHS_SEPARATOR) {
+            path.push(PATHS_SEPARATOR);
+        }
+
+        // We ensured above that paths_str and path end with a PATHS_SEPARATOR
+        let new_path = format!("{}{}{}{}", paths_str, path, cwd.to_string_lossy(), PATHS_SEPARATOR);
+        std::env::set_var("PATH", new_path);
+    }
 }
 
 #[cfg(target_os = "windows")]

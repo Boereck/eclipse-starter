@@ -47,13 +47,14 @@ pub fn run_framework<S: AsRef<str>>(
     // TODO: initialize windowing system
 
     // TODO: on windows call Kernel32.dll#SetDllDirectoryW with empty str???
-    // TODO: Find the directory where the Eclipse program is installed. If not able to, return Err
+    // Find the directory where the Eclipse program is installed. If not able to, return Err
     let program_dir = program_path.parent()
         .ok_or(EclipseLibErr::HomeNotFound)?;
 
     let complete_vm_args = complete_vm_args(vm_args, &parsed_args, &program_path);
 
-    determine_vm(&parsed_args, program_dir)?;
+    let vm_path = determine_vm(&parsed_args, program_dir)?;
+    dbg!(vm_path);
     // TODO: determine the vm to use.
     // TODO: find startup jar
 

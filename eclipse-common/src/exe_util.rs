@@ -17,24 +17,19 @@
 use std::path::{PathBuf, Path};
 use crate::path_util::*;
 
-// It seems there is no constant for paths separator in the rust standard library,
-// so we define this character for ourselves.
-
-#[cfg(target_os = "windows")]
-const PATHS_SEPARATOR: char = ';';
-
-#[cfg(not(target_os = "windows"))]
-const PATHS_SEPARATOR: char = ':';
-
-pub fn find_program(path: &Path) -> Option<PathBuf> {
-    // On windows we always use file extension .exe
-    if cfg!(target_os = "windows") && !has_extension_exe(path) {
-        let mut path = path.to_path_buf();
-        path.set_extension("exe");
-        find_program_internal(&path)
-    } else {
-        find_program_internal(path)
-    }
+pub fn find_program<P: AsRef<Path>>(path: P) -> Option<PathBuf> {
+    let path = path.as_ref();
+    
+    find_program_internal(path).or_else(|| {
+        // If the command does not end with .exe, append it an try again.
+        if cfg!(target_os = "windows") && !has_extension_exe(path) {
+            let mut path = path.to_path_buf();
+            path.set_extension("exe");
+            find_program_internal(&path)
+        } else {
+            None
+        }
+    })
 }
 
 fn find_program_internal(path: &Path) -> Option<PathBuf> {
