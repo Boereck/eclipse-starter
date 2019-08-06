@@ -16,7 +16,7 @@ use crate::eclipse_params_parse::parse_args;
 use crate::errors::EclipseLibErr;
 use crate::params::EclipseParams;
 use crate::vm_args_read::complete_vm_args;
-use crate::vm_lookup::{JvmLaunchMode, determine_vm};
+use crate::vm_lookup::{determine_vm, JvmLaunchMode};
 use eclipse_common::name_util::get_default_official_name_from_str;
 use std::path::{Path, PathBuf};
 
@@ -48,8 +48,7 @@ pub fn run_framework<S: AsRef<str>>(
 
     // TODO: on windows call Kernel32.dll#SetDllDirectoryW with empty str???
     // Find the directory where the Eclipse program is installed. If not able to, return Err
-    let program_dir = program_path.parent()
-        .ok_or(EclipseLibErr::HomeNotFound)?;
+    let program_dir = program_path.parent().ok_or(EclipseLibErr::HomeNotFound)?;
 
     let complete_vm_args = complete_vm_args(vm_args, &parsed_args, &program_path);
 
@@ -61,7 +60,6 @@ pub fn run_framework<S: AsRef<str>>(
     // TODO: Port rest of run from C
     Ok(())
 }
-
 
 /// Based on the default `action` uses `initial_args`
 /// to update the given `params`.
@@ -93,4 +91,3 @@ fn process_default_action<S: AsRef<str>>(
         .collect();
     params.openfile = Some(files);
 }
-

@@ -28,8 +28,7 @@ use eclipse_common::exe_util::find_program;
 pub fn get_exe_path() -> Result<PathBuf,io::Error> {
     // First try to find program from first command line argument
     if let Some(first_arg) = std::env::args().next() {
-        let program_path = PathBuf::from(first_arg);
-        if let Some(program_location) = find_program(&program_path) {
+        if let Some(program_location) = find_program(&first_arg) {
             return Ok(program_location);
         }
     }

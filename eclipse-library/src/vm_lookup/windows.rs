@@ -13,7 +13,7 @@
  *******************************************************************************/
 
 use super::common::{contains_paths, get_vm_library_search_path, is_vm_library};
-use crate::params::EclipseParams;
+use crate::params::{EclipseEEProps, EclipseParams};
 use eclipse_common::native_str::to_native_str;
 use eclipse_common::path_buf;
 use eclipse_common::path_util::PATHS_SEPARATOR;
@@ -64,10 +64,12 @@ pub fn find_vm_library(
     vm_exe_path: &Path,
     exe_dir: &Path,
     params: &EclipseParams,
+    ee_props: Option<&EclipseEEProps>,
 ) -> Option<PathBuf> {
     let lib = find_lib(vm_exe_path, exe_dir);
+    let lib = lib.and_then(|path| std::fs::canonicalize(path).ok());
     if let Some(lib_path) = lib.as_ref() {
-        adjust_search_path(lib_path, params);
+        adjust_search_path(lib_path, params, ee_props);
     }
     lib
 }
@@ -227,8 +229,8 @@ fn check_vm_registry_key(jre_key: HKEY, mut sub_key_name: [u16; MAX_PATH]) -> Op
 }
 
 // TODO: is this generic enough to be moved to common?
-fn adjust_search_path(lib_path: &Path, params: &EclipseParams) {
-    let paths = get_vm_library_search_path(lib_path, params, None);
+fn adjust_search_path(lib_path: &Path, params: &EclipseParams, ee_props: Option<&EclipseEEProps>) {
+    let paths = get_vm_library_search_path(lib_path, params, ee_props);
     // Add current working directory to end of search path
     let cwd = std::env::current_dir().unwrap_or_default();
     let (need_adjust, mut path) = if let Ok(path) = std::env::var("PATH") {
@@ -263,8 +265,7 @@ fn adjust_search_path(lib_path: &Path, params: &EclipseParams) {
     }
 }
 
-#[cfg(target_os = "windows")]
-fn console_needed(params: &EclipseParams) -> bool {
+pub fn console_needed(params: &EclipseParams) -> bool {
     params.console.is_set() || params.console_log || is_console_launcher()
 }
 

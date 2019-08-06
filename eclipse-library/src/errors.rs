@@ -15,7 +15,7 @@
 
 //! Provides this crate's error type `EclipseLibErr`.
 
-/// This is the error type for this crate. All introduced errors shall be 
+/// This is the error type for this crate. All introduced errors shall be
 /// a variant of this type.
 #[derive(Debug)]
 pub enum EclipseLibErr {

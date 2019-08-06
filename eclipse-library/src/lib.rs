@@ -137,13 +137,14 @@
 //!     java -Dtest="one" -Dtest="two" ...  : test is set to the value "two"
 
 mod eclipse_params_parse;
+mod ee_params_parse;
 mod errors;
 mod iter_ptr;
 mod java;
 mod native_str_read;
-mod vm_args_read;
 mod params;
 mod run;
+mod vm_args_read;
 mod vm_lookup;
 
 use eclipse_common::native_str::NativeString;

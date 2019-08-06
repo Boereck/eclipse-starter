@@ -14,7 +14,7 @@
  *******************************************************************************/
 
 use jni::objects::{JObject, JString};
-use jni::sys::{jstring, jlong};
+use jni::sys::{jlong, jstring};
 use jni::JNIEnv;
 use jni_mangle::jni_mangle;
 
@@ -28,7 +28,13 @@ pub extern "system" fn set_exit_data(env: JNIEnv, object: JObject, id: JString, 
 /// Signature: (Ljava/lang/String;Ljava/lang/String;)V
 #[no_mangle]
 #[jni_mangle("org.eclipse.equinox.launcher.JNIBridge")]
-pub extern "system" fn set_launcher_info(env: JNIEnv, object: JObject, launcher: JString, name: JString) -> () {}
+pub extern "system" fn set_launcher_info(
+    env: JNIEnv,
+    object: JObject,
+    launcher: JString,
+    name: JString,
+) -> () {
+}
 
 /// org_eclipse_equinox_launcher_JNIBridge#_update_splash
 /// Signature: ()V
@@ -48,7 +54,7 @@ pub extern "system" fn get_splash_handle(env: JNIEnv, object: JObject) -> jlong 
 /// Signature: (Ljava/lang/String;)V
 #[no_mangle]
 #[jni_mangle("org.eclipse.equinox.launcher.JNIBridge")]
-pub extern "system" fn show_splash(env: JNIEnv, obj: JObject, s: JString) ->() {}
+pub extern "system" fn show_splash(env: JNIEnv, obj: JObject, s: JString) -> () {}
 
 /// org_eclipse_equinox_launcher_JNIBridge#_takedown_splash
 /// Signature: ()V
@@ -60,8 +66,6 @@ pub extern "system" fn takedown_splash(env: JNIEnv, object: JObject) -> () {}
 /// Signature: ()Ljava/lang/String
 #[no_mangle]
 #[jni_mangle("org.eclipse.equinox.launcher.JNIBridge")]
-pub extern "system" fn get_os_recommended_folder(env: JNIEnv, object: JObject)-> jstring {
+pub extern "system" fn get_os_recommended_folder(env: JNIEnv, object: JObject) -> jstring {
     unimplemented!()
 }
-
-

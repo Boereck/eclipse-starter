@@ -3,11 +3,11 @@
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at 
+ * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
@@ -25,23 +25,22 @@ pub type NativeString = *const u16;
 #[cfg(not(target_os = "windows"))]
 pub type NativeString = *const c_char;
 
-
 /// Converts a Rust UTF-8 string into a tuple of
-/// a vector holding the UTF-16 characters and a 
+/// a vector holding the UTF-16 characters and a
 /// `NativeString`, which is a pointer to these characters.
 /// Note that the `NativeString` *must not* outlive the
-/// vector. Unfortunately, this cannot be represented in the 
+/// vector. Unfortunately, this cannot be represented in the
 /// type system when using raw pointers.
-#[cfg(target_os="windows")]
+#[cfg(target_os = "windows")]
 pub fn to_native_str(s: &str) -> (Vec<u16>, NativeString) {
     let vec = str_to_utf16(s);
     let ptr = vec.as_ptr();
     (vec, ptr)
 }
 
-/// Converts a Rust string into a Vec of 
+/// Converts a Rust string into a Vec of
 /// null-terminated UTF-16 characters
-#[cfg(target_os="windows")]
+#[cfg(target_os = "windows")]
 pub fn str_to_utf16(s: &str) -> Vec<u16> {
     let mut vec: Vec<u16> = s.encode_utf16().collect();
     vec.push(0);

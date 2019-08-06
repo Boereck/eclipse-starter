@@ -15,18 +15,18 @@
 //! This module provides the public function `complete_vm_args` which allows
 //! to combine the JVM arguments specified via command line and ini file(s).
 
+use crate::errors::EclipseLibErr;
+use crate::params::EclipseParams;
+use eclipse_common::ini_reader::read_ini;
 #[cfg(target_os = "macos")]
 use eclipse_common::ini_reader::read_ini_lines;
-use eclipse_common::ini_reader::read_ini;
 use std::path::Path;
 #[cfg(target_os = "macos")]
 use std::path::PathBuf;
-use crate::params::EclipseParams;
-use crate::errors::EclipseLibErr;
 
 static VM_ARGS_PARAM: &str = "-vmargs";
 
-/// Returns all JVM paramters needed to start the framework. This will take 
+/// Returns all JVM paramters needed to start the framework. This will take
 /// the given `vm_args` from command line into account as well as the parameters
 /// specified in ini files. If `params.append_vmargs` is `false` only the VM arguments
 /// from `vm_args` are returned (except if `vm_args` is empty, in this case the arguments
@@ -93,7 +93,6 @@ fn vm_args_from_launcher_ini_from_config(params: &EclipseParams, program: &Path)
 
 #[cfg(target_os = "macos")]
 fn get_launcher_file_path_from_configuration(program: &Path) -> Option<PathBuf> {
-    
     let mut program_name = program.file_stem()?.to_str()?.to_string();
     program_name.push_str(".ini");
     // TODO: implement fn get_folder_for_application_data() -> Option<PathBuf>
@@ -110,7 +109,7 @@ fn vm_args_from_launcher_ini_from_config(_params: &EclipseParams, _program: &Pat
     unimplemented!();
 }
 
-fn vm_args_from_config(params : &EclipseParams, program: &Path) -> Vec<String> {
+fn vm_args_from_config(params: &EclipseParams, program: &Path) -> Vec<String> {
     if let Ok(lines_iter) = read_ini(&params.ini, program) {
         let vm_args_iter = vm_args_from_params(lines_iter);
         vm_args_iter.collect()

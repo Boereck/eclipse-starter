@@ -17,8 +17,12 @@
 
 
 use std::path::{Path, PathBuf};
-use crate::params::EclipseParams;
+use crate::params::{EclipseParams, EclipseEEProps};
 
-pub fn find_vm_library(exe_path: &Path, exe_dir: &Path, params: &EclipseParams) -> Option<PathBuf> {
+pub fn find_vm_library(exe_path: &Path, exe_dir: &Path, params: &EclipseParams, ee_props: Option<&EclipseEEProps>,) -> Option<PathBuf> {
     unimplemented!();
+}
+
+pub fn console_needed(params: &EclipseParams) -> bool {
+    params.console.is_set() || params.console_log
 }

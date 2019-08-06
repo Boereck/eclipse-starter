@@ -3,11 +3,11 @@
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at 
+ * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
@@ -37,10 +37,10 @@ pub const PATHS_SEPARATOR: char = ':';
 /// able to cope with Windows UNC file names
 /// On other systems this function is a no-op.
 pub fn strip_unc_prefix(file_path: &str) -> &str {
-	if cfg!(target_os = "windows") {
+    if cfg!(target_os = "windows") {
         file_path.trim_start_matches(r"\\?\")
     } else {
-	   file_path
+        file_path
     }
 }
 
@@ -106,19 +106,19 @@ pub fn find_file(location: &Path, name_prefix: &str) -> Option<PathBuf> {
 
 /// This macro creates a `std::path::PathBuf`, adds all elements
 /// passed to the macro to the buffer and returns it in the end.
-/// 
+///
 /// Example:
 /// ```
 /// use eclipse_common::path_buf;
-/// 
+///
 /// let mut foobar1 = std::path::PathBuf::from("foo");
 /// foobar1.push("bar");
-/// 
+///
 /// let foobar2 = path_buf!["foo", "bar",];
-/// 
+///
 /// assert_eq!(foobar1, foobar2);
 /// ```
-/// 
+///
 /// This macro is usefull when `let p: PathBuf = [a,b].iter().collect()`
 /// does not work, because `a` and `b` have different types, so have
 /// different sizes.
@@ -149,8 +149,8 @@ struct Version {
 }
 
 /// Tries to parse the given `file_name`, assuming that the name contains the
-/// pattern "_major.minor.patch.qualifier" where all components, except for qualifier 
-/// are sequences of digits, and the ".minor.patch.qualifier" part is optional. 
+/// pattern "_major.minor.patch.qualifier" where all components, except for qualifier
+/// are sequences of digits, and the ".minor.patch.qualifier" part is optional.
 /// The information is stored in a `Version` value and returned.
 fn get_version(file_name: &str) -> Version {
     lazy_static! {
@@ -180,7 +180,6 @@ fn to_string(m: Option<Match>) -> String {
 
 #[cfg(test)]
 mod tests {
-    
     #[test]
     fn test_get_version_plugin_name() {
         let version = super::get_version("_1.2.551.v20171108-1834");
@@ -211,15 +210,15 @@ mod tests {
     #[test]
     fn test_version_major_wins() {
         let bigger = super::Version {
-            major : 100,
-            minor : 0,
-            patch : 1,
+            major: 100,
+            minor: 0,
+            patch: 1,
             qualifier: "000000".to_string(),
         };
         let smaller = super::Version {
-            major : 10,
-            minor : 100_000,
-            patch : 5000,
+            major: 10,
+            minor: 100_000,
+            patch: 5000,
             qualifier: "12345".to_string(),
         };
         assert!(bigger > smaller);
@@ -228,15 +227,15 @@ mod tests {
     #[test]
     fn test_version_major_equal_minor_wins() {
         let bigger = super::Version {
-            major : 100,
-            minor : 10,
-            patch : 1,
+            major: 100,
+            minor: 10,
+            patch: 1,
             qualifier: "000000".to_string(),
         };
         let smaller = super::Version {
-            major : 100,
-            minor : 2,
-            patch : 5000,
+            major: 100,
+            minor: 2,
+            patch: 5000,
             qualifier: "12345".to_string(),
         };
         assert!(bigger > smaller);
@@ -245,15 +244,15 @@ mod tests {
     #[test]
     fn test_version_major_minor_equal_patch_wins() {
         let bigger = super::Version {
-            major : 100,
-            minor : 50,
-            patch : 42,
+            major: 100,
+            minor: 50,
+            patch: 42,
             qualifier: "000000".to_string(),
         };
         let smaller = super::Version {
-            major : 100,
-            minor : 50,
-            patch : 41,
+            major: 100,
+            minor: 50,
+            patch: 41,
             qualifier: "12345".to_string(),
         };
         assert!(bigger > smaller);
@@ -262,15 +261,15 @@ mod tests {
     #[test]
     fn test_version_major_minor_patch_equal_qualifier_wins() {
         let bigger = super::Version {
-            major : 100,
-            minor : 50,
-            patch : 42,
+            major: 100,
+            minor: 50,
+            patch: 42,
             qualifier: "v20171109-1834".to_string(),
         };
         let smaller = super::Version {
-            major : 100,
-            minor : 50,
-            patch : 42,
+            major: 100,
+            minor: 50,
+            patch: 42,
             qualifier: "v20171108-1834".to_string(),
         };
         assert!(bigger > smaller);

@@ -14,12 +14,12 @@
 
 //! Parses commandline arguments into an instance of `EclipseParams`
 
-use eclipse_common::arg_parser::{Parser, ListParseStyle};
 use super::params::EclipseParams;
+use eclipse_common::arg_parser::{ListParseStyle, Parser};
 
 // Argument names
 static CONSOLE: &str = "-console";
-static CONSOLELOG : &str = "-consoleLog";
+static CONSOLELOG: &str = "-consoleLog";
 static DEBUG: &str = "-debug";
 static OS: &str = "-os";
 static OSARCH: &str = "-arch";
@@ -43,11 +43,8 @@ static SECOND_THREAD: &str = "--launcher.secondThread";
 static PERM_GEN: &str = "--launcher.XXMaxPermSize";
 static GTK_VERSION: &str = "--launcher.GTK_version";
 
-
-pub(super) fn parse_args<T : AsRef<str>>(args : &[T]) -> EclipseParams {
-    
+pub(super) fn parse_args<T: AsRef<str>>(args: &[T]) -> EclipseParams {
     let mut parser = Parser::new();
-    
     let console_id = parser.add_optional_option(CONSOLE);
     let console_log_id = parser.add_flag(CONSOLELOG);
     let debug_id = parser.add_optional_option(DEBUG);
@@ -71,7 +68,6 @@ pub(super) fn parse_args<T : AsRef<str>>(args : &[T]) -> EclipseParams {
     let second_thread_id = parser.add_flag(SECOND_THREAD);
     let perm_gen_id = parser.add_flag(PERM_GEN);
     let gtk_version_id = parser.add_option(GTK_VERSION);
-    
     let iter = args.iter().map(|s| s.as_ref());
     let mut parse_result = parser.parse(iter);
     //TODO adjust paths of openfile
