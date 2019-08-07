@@ -21,4 +21,5 @@
 pub enum EclipseLibErr {
     HomeNotFound,
     JvmNotFound(String),
+    NoStartupJarFound,
 }

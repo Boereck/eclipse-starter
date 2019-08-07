@@ -16,11 +16,12 @@ use crate::eclipse_params_parse::parse_args;
 use crate::errors::EclipseLibErr;
 use crate::params::EclipseParams;
 use crate::vm_args_read::complete_vm_args;
-use crate::vm_lookup::{determine_vm, JvmLaunchMode};
+use crate::vm_lookup::{determine_vm};
+use crate::jar_lookup::find_startup_jar;
 use eclipse_common::name_util::get_default_official_name_from_str;
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 
-static ACTION_OPENFILE: &str = "openFile";
+const ACTION_OPENFILE: &str = "openFile";
 
 pub fn run_framework<S: AsRef<str>>(
     args: &[S],
@@ -47,6 +48,7 @@ pub fn run_framework<S: AsRef<str>>(
     // TODO: initialize windowing system
 
     // TODO: on windows call Kernel32.dll#SetDllDirectoryW with empty str???
+
     // Find the directory where the Eclipse program is installed. If not able to, return Err
     let program_dir = program_path.parent().ok_or(EclipseLibErr::HomeNotFound)?;
 
@@ -54,8 +56,15 @@ pub fn run_framework<S: AsRef<str>>(
 
     let vm_path = determine_vm(&parsed_args, program_dir)?;
     dbg!(vm_path);
-    // TODO: determine the vm to use.
+    
     // TODO: find startup jar
+    let jar_file = find_startup_jar(&parsed_args, program_dir)?;
+
+    // TODO: on windows: if( launchMode == LAUNCH_JNI && (debug || needConsole) ) createConsole
+    // TODO: show splash if needed
+    
+    // not using JNI launching, need some shared data
+    //let data = create_shared_data();
 
     // TODO: Port rest of run from C
     Ok(())
@@ -91,3 +100,5 @@ fn process_default_action<S: AsRef<str>>(
         .collect();
     params.openfile = Some(files);
 }
+
+
