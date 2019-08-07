@@ -14,8 +14,8 @@
 
 mod nix;
 
-pub use nix::find_vm_library;
 use crate::params::EclipseParams;
+pub use nix::{find_vm_library, console_needed};
 
 static DEFAULT_VM: &str = "java";
 pub static VM_LIBRARY: &str = "JavaVM";
