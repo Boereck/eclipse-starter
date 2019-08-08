@@ -15,6 +15,9 @@
 
 //! Provides this crate's error type `EclipseLibErr`.
 
+use std::error::Error;
+use std::fmt;
+
 /// This is the error type for this crate. All introduced errors shall be
 /// a variant of this type.
 #[derive(Debug)]
@@ -22,4 +25,20 @@ pub enum EclipseLibErr {
     HomeNotFound,
     JvmNotFound(String),
     NoStartupJarFound,
+    SharedMemoryInitFail,
+    SharedMemoryReadFail,
+    SharedMemoryWriteFail,
+    SharedMemoryCloseFail,
+    SharedMemoryReadInvalidStr,
+    SharedMemoryIdParseFail,
+}
+
+impl fmt::Display for EclipseLibErr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // TODO: implement
+        write!(f, "EclipseLibErr")
+    }
+}
+
+impl Error for EclipseLibErr {
 }

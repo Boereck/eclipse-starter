@@ -15,11 +15,8 @@
 use crate::iter_ptr::iter;
 use eclipse_common::native_str::NativeString;
 use std::ffi::OsString;
-use std::ptr;
-
-#[cfg(not(target_os = "windows"))]
 use std::ffi::CStr;
-#[cfg(not(target_os = "windows"))]
+use std::ptr;
 use std::os::raw::c_char;
 #[cfg(target_os = "windows")]
 use std::os::windows::prelude::*;
@@ -45,8 +42,7 @@ pub fn null_term_utf8_str_array_to_string_vec(native_strings: *mut NativeString)
     utf8_str_array_to_string_vec(native_strings, count)
 }
 
-#[cfg(not(target_os = "windows"))]
-pub fn utf8_str_to_string(native_string: NativeString) -> Option<String> {
+pub fn utf8_str_to_string(native_string: *const c_char) -> Option<String> {
     if native_string.is_null() {
         return None;
     }

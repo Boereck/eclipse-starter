@@ -29,7 +29,7 @@ const EE_CONSOLE: &str = "-Dee.executable.console";
 const EE_VM_LIBRARY: &str = "-Dee.vm.library";
 const EE_LIBRARY_PATH: &str = "-Dee.library.path";
 const EE_FILENAME: &str = "-Dee.filename";
-const EE_HOME: &str = "-Dee.home=";
+const EE_HOME: &str = "-Dee.home";
 
 pub fn parse_ee_params(ee_file: &Path) -> Result<EclipseEEProps, Error> {
     let ee_file_str = ee_file.to_string_lossy().to_string();
