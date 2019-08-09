@@ -42,7 +42,6 @@ use exe_util::get_exe_path;
 use launcher_lib::{find_library, load_library, new_launcher, EclipseLauncher};
 use params::EclipseLauncherParams;
 use std::path::Path;
-use unicode_segmentation::UnicodeSegmentation;
 
 #[cfg(not(target_os = "windows"))]
 use libc::geteuid;

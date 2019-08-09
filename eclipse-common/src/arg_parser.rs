@@ -360,7 +360,7 @@ mod parser_test {
         let args = vec!["-clean", "-console", "-application", "foo.bar"];
         let iter = args.iter().copied();
         let mut parser = super::Parser::new();
-        let clean = parser.add_option("-application");
+        let _application = parser.add_option("-application");
         let console = parser.add_optional_option("-console");
         let mut parse_result = parser.parse(iter);
         let console_value = parse_result.take_optional_option(console);
@@ -372,7 +372,7 @@ mod parser_test {
         let args = vec!["-clean", "-application", "foo.bar"];
         let iter = args.iter().copied();
         let mut parser = super::Parser::new();
-        let clean = parser.add_option("-application");
+        let _application = parser.add_option("-application");
         let console = parser.add_optional_option("-console");
         let mut parse_result = parser.parse(iter);
         let console_value = parse_result.take_optional_option(console);
@@ -384,7 +384,7 @@ mod parser_test {
         let args = vec!["-clean", "-console", "localhost:9090", "-application", "foo.bar"];
         let iter = args.iter().copied();
         let mut parser = super::Parser::new();
-        let clean = parser.add_option("-application");
+        let _application = parser.add_option("-application");
         let console = parser.add_optional_option("-console");
         let mut parse_result = parser.parse(iter);
         let console_value = parse_result.take_optional_option(console);

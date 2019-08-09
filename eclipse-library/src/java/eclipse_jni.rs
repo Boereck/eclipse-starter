@@ -18,7 +18,7 @@ use jni::sys::{jlong, jstring};
 use jni::JNIEnv;
 use jni_mangle::jni_mangle;
 use std::error::Error;
-use crate::shared_mem::{crete_shared_mem_ref, SharedMemRef};
+use crate::shared_mem::{crete_shared_mem_ref, SharedMemRef, MAX_SHARED_LENGTH};
 
 /// org_eclipse_equinox_launcher_JNIBridge#_set_exit_data
 /// Signature: (Ljava/lang/String;Ljava/lang/String;)V
@@ -41,7 +41,7 @@ fn set_exit_data_internal(env: &JNIEnv, _object: JObject, id: JString, s: JStrin
     let id_jstr = env.get_string(id)?;
     let id_rstr = id_jstr.to_str()?;
     
-    crete_shared_mem_ref(id_rstr)?.write(s_rstr)?;
+    crete_shared_mem_ref(id_rstr, MAX_SHARED_LENGTH)?.write(s_rstr)?;
     Ok(())
 }
 

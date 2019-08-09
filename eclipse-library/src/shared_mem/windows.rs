@@ -13,7 +13,7 @@
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
 
-use super::common::{SharedMem, SharedMemRef};
+use super::common::{SharedMem, SharedMemRef, ECLIPSE_UNITIALIZED};
 use crate::errors::EclipseLibErr;
 use crate::native_str_read::utf8_str_to_string;
 use std::os::raw::c_char;
@@ -66,11 +66,16 @@ impl SharedMem for SharedMemOS {
         } else {
             format!("{:x}_{:x}", process_id_param, map_handle_param as DWORD)
         };
+
         let result = SharedMemOS {
             map_handle: map_handle_param,
             id: id_str,
             max_len: mem_size,
         };
+
+        // Initialize memory
+        result.write(ECLIPSE_UNITIALIZED)?;
+
         Ok(result)
     }
 
@@ -92,29 +97,7 @@ impl SharedMem for SharedMemOS {
     }
 
     fn write(&self, s: &str) -> Result<(), EclipseLibErr> {
-        let shared_data = unsafe { MapViewOfFile(self.map_handle, FILE_MAP_WRITE, 0, 0, 0) };
-
-        if shared_data.is_null() {
-            return Err(EclipseLibErr::SharedMemoryWriteFail);
-        }
-
-        let s_raw = s.as_ptr();
-        let size_bytes = std::cmp::min(s.len(), self.max_len - 1);
-
-        if size_bytes != 0 {
-            unsafe { std::ptr::copy(s_raw, shared_data as *mut u8, size_bytes) };
-            // rusts string does not end with 0, lets terminate
-            let null_pos = s_raw.wrapping_add(size_bytes) as *mut u8;
-            unsafe { std::ptr::write_bytes(null_pos, 0, 1) };
-        } else {
-            unsafe { std::ptr::write_bytes(shared_data, 0, 1) };
-        }
-
-        if unsafe { UnmapViewOfFile(shared_data) } == 0 {
-            return Err(EclipseLibErr::SharedMemoryWriteFail);
-        }
-
-        Ok(())
+        write_str_to_shared_data(s, self.map_handle, self.max_len)
     }
 
     fn get_id(&self) -> &str {
@@ -124,6 +107,38 @@ impl SharedMem for SharedMemOS {
     fn close(mut self) -> Result<(), EclipseLibErr> {
         self.close_internal()
     }
+}
+
+fn write_str_to_shared_data(
+    s: &str,
+    map_handle: HANDLE,
+    max_len: usize,
+) -> Result<(), EclipseLibErr> {
+    let shared_data = unsafe { MapViewOfFile(map_handle, FILE_MAP_WRITE, 0, 0, 0) };
+    if shared_data.is_null() {
+        return Err(EclipseLibErr::SharedMemoryWriteFail);
+    }
+
+    let s_raw = s.as_ptr();
+    // We do not want to write more bytes than shared mem size and
+    // we need space for the terminating 0
+    let size_bytes = std::cmp::min(s.len(), max_len - 1);
+
+    let shared_data_chars = shared_data as *mut u8;
+    if size_bytes != 0 {
+        unsafe { std::ptr::copy(s_raw, shared_data_chars, size_bytes) };
+        // rusts string does not end with 0, lets terminate
+        let null_pos = shared_data_chars.wrapping_add(size_bytes);
+        unsafe { std::ptr::write_bytes(null_pos, 0, 1) };
+    } else {
+        unsafe { std::ptr::write_bytes(shared_data, 0, 1) };
+    }
+
+    if unsafe { UnmapViewOfFile(shared_data) } == 0 {
+        return Err(EclipseLibErr::SharedMemoryWriteFail);
+    }
+
+    Ok(())
 }
 
 impl SharedMemOS {
@@ -150,15 +165,20 @@ impl Drop for SharedMemOS {
 
 pub struct SharedMemRefOS {
     map_handle: HANDLE,
+    max_size: usize,
+    close_handle_on_drop: bool,
 }
 
 impl SharedMemRef for SharedMemRefOS {
-    fn from_id(id: &str) -> Result<Self, EclipseLibErr> {
+    fn from_id(id: &str, size: usize) -> Result<Self, EclipseLibErr> {
         let mut split = id.splitn(2, '_');
+
+        // Restore process_id
         let first = split.next().ok_or(EclipseLibErr::SharedMemoryIdParseFail)?;
         let process_id =
             u32::from_str_radix(first, 16).map_err(|_| EclipseLibErr::SharedMemoryIdParseFail)?;
 
+        // Restore map_handle
         let second = split.next().ok_or(EclipseLibErr::SharedMemoryIdParseFail)?;
         let map_handle: HANDLE = if cfg!(target_arch = "x86_64") {
             u64::from_str_radix(second, 16).map_err(|_| EclipseLibErr::SharedMemoryIdParseFail)?
@@ -199,12 +219,42 @@ impl SharedMemRef for SharedMemRefOS {
             return Err(EclipseLibErr::SharedMemoryIdParseFail);
         }
 
-        let result = SharedMemRefOS { map_handle: handle };
-
+        let result = SharedMemRefOS {
+            map_handle: handle,
+            max_size: size,
+            close_handle_on_drop: (handle != map_handle),
+        };
         Ok(result)
     }
 
     fn write(&self, s: &str) -> Result<(), EclipseLibErr> {
-        unimplemented!()
+        write_str_to_shared_data(s, self.map_handle, self.max_size)
+    }
+
+    fn close(mut self) -> Result<(), EclipseLibErr> {
+        self.close_internal()
+    }
+
+}
+
+impl SharedMemRefOS {
+    fn close_internal(&mut self) -> Result<(), EclipseLibErr> {
+        if !self.close_handle_on_drop || self.map_handle.is_null() {
+            return Ok(());
+        }
+        let close_result = unsafe { CloseHandle(self.map_handle) };
+        self.map_handle = std::ptr::null_mut();
+        if close_result != 0 {
+            Ok(())
+        } else {
+            Err(EclipseLibErr::SharedMemoryCloseFail)
+        }
+    }
+}
+
+#[allow(unused_must_use)] // we cannot handle errors in drop
+impl Drop for SharedMemRefOS {
+    fn drop(&mut self) {
+        self.close_internal();
     }
 }

@@ -41,15 +41,26 @@ impl SharedMem for SharedMemOS {
     }
 }
 
+#[allow(unused_must_use)] // we cannot handle errors in drop
+impl Drop for SharedMemOS {
+    fn drop(&mut self) {
+        unimplemented!()
+    }
+}
+
 pub struct SharedMemRefOS{
 }
 
 impl SharedMemRef for SharedMemRefOS {
-    fn from_id(id: &str) -> Result<Self, EclipseLibErr> {
+    fn from_id(id: &str, max_size: usize) -> Result<Self, EclipseLibErr> {
         unimplemented!()
     }
 
     fn write(&self, s: &str) -> Result<(), EclipseLibErr> {
+        unimplemented!()
+    }
+
+    fn close(mut self) -> Result<(), EclipseLibErr> {
         unimplemented!()
     }
 }

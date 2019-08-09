@@ -148,6 +148,7 @@ mod vm_args_read;
 mod vm_lookup;
 mod jar_lookup;
 mod shared_mem;
+mod vm_command;
 
 use eclipse_common::native_str::NativeString;
 use lazy_static::lazy_static;

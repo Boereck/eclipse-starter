@@ -15,7 +15,10 @@
 
 use crate::errors::EclipseLibErr;
 
-pub(super) static ECLIPSE_UNITIALIZED: &str = "ECLIPSE_UNITIALIZED";
+/// Value that should usually be used to pass it as `mem_size` to 
+/// `SharedMem::create` or as `max_size` to `SharedMemRef::from_id`.
+pub const MAX_SHARED_LENGTH: usize = 16 * 1024;
+pub(super) const ECLIPSE_UNITIALIZED: &str = "ECLIPSE_UNITIALIZED";
 
 /// Represents and manages a segment of shared memory. Instantiate such a segment
 /// using the `create` method on a concrete implementation type.
@@ -27,11 +30,21 @@ pub trait SharedMem : Sized + Drop {
     /// with the specified `mem_size`. To destroy the shared memory,
     /// call the `close` function. Note that dropping the instance will
     /// also close the memory segment, but will give no feedback if 
-    /// closing was successful.
+    /// closing was successful. The value `MAX_SHARED_LENGTH` should usually
+    /// be used as `mem_size`.
+    /// Creating shared memory may fail, in this case an `Err(EclipseLibErr::SharedMemoryInitFail)`
+    /// is returned. If the initialization of the shared memory fails, an
+    /// `Err(EclipseLibErr::SharedMemoryWriteFail)` is returned.
     fn create(mem_size: usize) -> Result<Self, EclipseLibErr>;
 
+    /// Reads a null terminated UTF-8 string from shared memory 
+    /// and copies the bytes to a new `String` that is returned.
     fn read(&self) -> Result<String, EclipseLibErr>;
 
+    /// Writes the given string `s` as a UTF-8 encoded, null-terminated
+    /// string into the managed shared memory. Note that the string will
+    /// be truncated if it is longer than `mem_size - 1`, where `mem_size`
+    /// is the value that was passed to the `create` method.
     fn write(&self, s: &str) -> Result<(), EclipseLibErr>;
 
     /// Retruns string of an ID, that can later be used to construct a `SharedMemRef`.
@@ -52,7 +65,14 @@ pub trait SharedMem : Sized + Drop {
 pub trait SharedMemRef : Sized {
 
     /// Creates a `SharedMemRef` from an ID provided by `SharedMem::get_id`.
-    fn from_id(id: &str) -> Result<Self, EclipseLibErr>;
+    /// The value `MAX_SHARED_LENGTH` should usually be used as `max_size`.
+    fn from_id(id: &str, max_size: usize) -> Result<Self, EclipseLibErr>;
 
+    /// Writes the given string `s` as a UTF-8 encoded, null-terminated
+    /// string into the managed shared memory. Note that the string will
+    /// be truncated if it is longer than `max_size - 1`, where `max_size`
+    /// is the value that was passed to the `from_id` method.
     fn write(&self, s: &str) -> Result<(), EclipseLibErr>;
+
+    fn close(self) -> Result<(), EclipseLibErr> ;
 }
