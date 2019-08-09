@@ -18,8 +18,6 @@ use crate::errors::EclipseLibErr;
 use crate::native_str_read::utf8_str_to_string;
 use std::os::raw::c_char;
 use winapi::shared::minwindef::DWORD;
-use winapi::shared::minwindef::LPDWORD;
-use winapi::shared::minwindef::LPHANDLE;
 use winapi::shared::ntdef::DWORDLONG;
 use winapi::shared::ntdef::HANDLE;
 use winapi::um::handleapi::CloseHandle;
@@ -29,12 +27,11 @@ use winapi::um::memoryapi::CreateFileMappingW;
 use winapi::um::memoryapi::MapViewOfFile;
 use winapi::um::memoryapi::UnmapViewOfFile;
 use winapi::um::memoryapi::FILE_MAP_WRITE;
-use winapi::um::minwinbase::LPSECURITY_ATTRIBUTES;
 use winapi::um::processthreadsapi::GetCurrentProcess;
 use winapi::um::processthreadsapi::OpenProcess;
 use winapi::um::winnt::DUPLICATE_SAME_ACCESS;
 use winapi::um::winnt::PROCESS_ALL_ACCESS;
-use winapi::um::winnt::{LPCWSTR, PAGE_READWRITE};
+use winapi::um::winnt::PAGE_READWRITE;
 
 pub struct SharedMemOS {
     map_handle: HANDLE,
