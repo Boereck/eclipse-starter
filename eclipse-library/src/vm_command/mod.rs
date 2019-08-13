@@ -17,12 +17,12 @@
 #[cfg_attr(target_os = "windows", path = "windows.rs")]
 mod os;
 
-use core::cmp::min;
 use crate::params::EclipseParams;
 use crate::vm_lookup::JvmLaunchMode;
+use core::cmp::min;
+use eclipse_common::arg_parser::OptionalParam;
 use eclipse_common::eclipse_params_flags::*;
 use eclipse_common::path_util::strip_unc_prefix;
-use eclipse_common::arg_parser::OptionalParam;
 use os::{default_vm_args, is_modular_vm};
 use std::borrow::Cow;
 use std::path::Path;
@@ -39,7 +39,7 @@ pub struct VmArgs<'e> {
 pub fn get_vm_command<'a, 'b, S: AsRef<str>>(
     launch_mode: &'a JvmLaunchMode,
     args: &'a [S],
-    user_vm_args: &'a [Cow<'a,str>],
+    user_vm_args: &'a [Cow<'a, str>],
     initial_args: &'a [S],
     jar_file: &'a Path,
     params: &'a EclipseParams,
@@ -59,7 +59,7 @@ where
 
     // the startup jarFile goes on the classpath
     let jar_file_cow = jar_file.to_string_lossy();
-    let jar_file_str= strip_unc_prefix(&jar_file_cow);
+    let jar_file_str = strip_unc_prefix(&jar_file_cow);
     // TODO: maybe use smallvec here for a stack allocated vector
     let classpath_vars: Vec<Cow<'_, str>> = match launch_mode {
         // JNI launching, classpath is set using -Djava.class.path
@@ -95,7 +95,14 @@ where
     result_vm_args.extend_from_slice(&classpath_vars);
 
     // Now collect resulting program arguments
-    let result_program_arts = get_program_args(args, &result_vm_args, params, exitdata, program_path, launch_mode);
+    let result_program_arts = get_program_args(
+        args,
+        &result_vm_args,
+        params,
+        exitdata,
+        program_path,
+        launch_mode,
+    );
 
     VmArgs {
         vm_args: result_vm_args,
@@ -114,7 +121,7 @@ fn get_program_args<'a, 'b, 'c, S: AsRef<str>>(
 where
     'a: 'b,
 {
-    // Count capacity needed. We do so by referencing parameters that are used 
+    // Count capacity needed. We do so by referencing parameters that are used
     // (so build fails if parameters go away), but in const fns, so all computation
     // can be done at build time.
     let result_prog_args_capacity = opt_opt_param_count(&params.showsplash)
@@ -131,7 +138,8 @@ where
         + args.len()
         + flag_count(VM)
         + vm_args.len();
-    let mut result_program_params: Vec<Cow<'b, str>> = Vec::with_capacity(result_prog_args_capacity);
+    let mut result_program_params: Vec<Cow<'b, str>> =
+        Vec::with_capacity(result_prog_args_capacity);
 
     // showsplash
     use OptionalParam::*;
@@ -140,7 +148,7 @@ where
         Set(ref s) => {
             result_program_params.push(SHOWSPLASH.into());
             result_program_params.push(s.into());
-        },
+        }
         _ => {}
     }
 
@@ -169,7 +177,7 @@ where
         result_program_params.push(startup.into());
     }
 
-    // Protect mode 
+    // Protect mode
     if let Some(ref protect) = params.protect {
         result_program_params.push(PROTECT.into());
         result_program_params.push(protect.into());
@@ -199,7 +207,7 @@ where
 
     result_program_params.push(VMARGS.into());
     // cloning of Cows can be expensive for owned variants,
-    // but up until now we have at most one owned vm_arg 
+    // but up until now we have at most one owned vm_arg
     // (classpath def on JvmLaunchMode::LaunchExe)
     let vm_arg_iter = vm_args.iter().map(Cow::clone);
     result_program_params.extend(vm_arg_iter);
@@ -227,8 +235,7 @@ const fn opt_flag_count(_opt: bool) -> usize {
     1
 }
 
-fn adjust_vm_args(launch_mode: &JvmLaunchMode, vm_args: &mut Vec<Cow<'_, str>>)
-{
+fn adjust_vm_args(launch_mode: &JvmLaunchMode, vm_args: &mut Vec<Cow<'_, str>>) {
     // JVMs whose version is >= 9 need an extra VM argument (--add-modules) to start eclipse but earlier versions
     // do not recognize this argument, remove it from the list of VM arguments when the JVM version is below 9
 
@@ -247,21 +254,149 @@ fn adjust_vm_args(launch_mode: &JvmLaunchMode, vm_args: &mut Vec<Cow<'_, str>>)
 
 fn remove_modular_vm_args(vm_args: &mut Vec<Cow<'_, str>>) {
     // remove --add-modules arguments
-    while let Some(index) = vm_args.iter().position(|s| s.starts_with(ADDMODULES)) {
-        let mod_arg = &vm_args[index];
-        let upper_index = if mod_arg.contains('=') {
+    let mut skip: usize = 0;
+    while let Some(index) = vm_args
+        .iter()
+        .skip(skip)
+        .position(|s| s.starts_with(ADDMODULES))
+    {
+        let abs_index = index + skip;
+        skip = abs_index; // since we're about to remove element at abs_index, start next iteration at this index
+        let mod_arg = &vm_args[abs_index];
+        if mod_arg.contains('=') {
             // --add-modules=<value>
             // only remove this parameter
-            index
+            vm_args.remove(abs_index);
         } else if mod_arg == ADDMODULES {
             let args_len = vm_args.len();
-            // --add-modules <value> OR --add-modules <end-of-vmArgv>
-            min(index + 1, args_len - 1)
+            // --add-modules <value> OR --add-modules <end-of-vm_args>
+            let upper_index = min(abs_index + 1, args_len - 1);
+            vm_args.drain(abs_index..=upper_index);
         } else {
             // Probable new argument e.g. --add-modules-if-required or misspelled argument e.g. --add-modulesq
-            continue;
+            skip += 1; // we skip this element which remains in the vec
         };
-        vm_args.drain(index ..= upper_index);
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::remove_modular_vm_args;
+    use super::ADDMODULES;
+    use std::borrow::Cow;
+
+    macro_rules! vec_into {
+        ($($e:expr,)*) => ( vec![$($e.into(),)*] )
+    }
+
+    #[test]
+    fn test_remove_modular_vm_args_nothing_to_remove() {
+        let mut args: Vec<Cow<'_, str>> = vec_into![
+            "-cp",
+            "myjar.jar",
+            "-Dosgi.requiredJavaVersion=1.8",
+            "-XX:+UseG1GC",
+        ];
+        let expected = args.clone();
+        remove_modular_vm_args(&mut args);
+        assert_eq!(args, expected);
+    }
+
+    #[test]
+    fn test_remove_modular_vm_args_remove_combined_middle() {
+        let modules = ADDMODULES.to_string() + "=ALL-SYSTEM";
+        let mut args: Vec<Cow<'_, str>> = vec_into![
+            "-cp",
+            "myjar.jar",
+            "-Dosgi.requiredJavaVersion=1.8",
+            "-XX:+UseG1GC",
+        ];
+        let expected = args.clone();
+        args.insert(2, modules.into());
+        remove_modular_vm_args(&mut args);
+        assert_eq!(args, expected);
+    }
+
+    #[test]
+    fn test_remove_modular_vm_args_remove_combined_last() {
+        let modules = ADDMODULES.to_string() + "=ALL-SYSTEM";
+        let mut args: Vec<Cow<'_, str>> = vec_into![
+            "-cp",
+            "myjar.jar",
+            "-Dosgi.requiredJavaVersion=1.8",
+            "-XX:+UseG1GC",
+            modules,
+        ];
+        let upper = args.len() - 1;
+        let expected: Vec<Cow<'_, str>> = args[..upper].iter().map(Clone::clone).collect();
+        remove_modular_vm_args(&mut args);
+        assert_eq!(args, expected);
+    }
+
+    #[test]
+    fn test_remove_modular_vm_args_remove_separate_middle() {
+        let mut args: Vec<Cow<'_, str>> =
+            vec_into!["-cp", "myjar.jar", ADDMODULES, "ALL-SYSTEM", "-XX:+UseG1GC",];
+        let mut expected = args.clone();
+        expected.drain(2..4);
+        remove_modular_vm_args(&mut args);
+        assert_eq!(args, expected);
+    }
+
+    #[test]
+    fn test_remove_modular_vm_args_remove_separate_last() {
+        let mut args: Vec<Cow<'_, str>> =
+            vec_into!["-cp", "myjar.jar", "-XX:+UseG1GC", ADDMODULES, "ALL-SYSTEM",];
+        let mut expected = args.clone();
+        expected.drain(3..5);
+        remove_modular_vm_args(&mut args);
+        assert_eq!(args, expected);
+    }
+
+    #[test]
+    fn test_remove_modular_vm_args_remove_multiple() {
+        let modules = ADDMODULES.to_string() + "=ALL-SYSTEM";
+        let mut args: Vec<Cow<'_, str>> = vec_into![
+            "-cp",
+            "myjar.jar",
+            modules,
+            "-XX:+UseG1GC",
+            ADDMODULES,
+            "ALL-SYSTEM",
+        ];
+        let mut expected = args.clone();
+        expected.drain(4..6);
+        expected.remove(2);
+        remove_modular_vm_args(&mut args);
+        assert_eq!(args, expected);
+    }
+
+    #[test]
+    fn test_remove_modular_vm_args_keep_unknown_with_addmodule_prefix() {
+        let mut args: Vec<Cow<'_, str>> = vec_into![
+            "-cp",
+            "myjar.jar",
+            "-Dosgi.requiredJavaVersion=1.8",
+            "--add-modules-if-required",
+            "-XX:+UseG1GC",
+        ];
+        let expected = args.clone();
+        remove_modular_vm_args(&mut args);
+        assert_eq!(args, expected);
+    }
+
+    #[test]
+    fn test_remove_modular_vm_args_keep_multiple_unknown_with_addmodule_prefix() {
+        let mut args: Vec<Cow<'_, str>> = vec_into![
+            "-cp",
+            "myjar.jar",
+            "-Dosgi.requiredJavaVersion=1.8",
+            "--add-modules-if-required",
+            "-XX:+UseG1GC",
+            "--add-modulesp",
+        ];
+        let expected = args.clone();
+        remove_modular_vm_args(&mut args);
+        assert_eq!(args, expected);
+    }
+}
