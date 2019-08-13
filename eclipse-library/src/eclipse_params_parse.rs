@@ -15,33 +15,8 @@
 //! Parses commandline arguments into an instance of `EclipseParams`
 
 use super::params::EclipseParams;
+use eclipse_common::eclipse_params_flags::*;
 use eclipse_common::arg_parser::{ListParseStyle, Parser};
-
-// Argument names
-static CONSOLE: &str = "-console";
-static CONSOLELOG: &str = "-consoleLog";
-static DEBUG: &str = "-debug";
-static OS: &str = "-os";
-static OSARCH: &str = "-arch";
-static NOSPLASH: &str = "-nosplash";
-static SHOWSPLASH: &str = "-showsplash";
-static STARTUP: &str = "-startup";
-static VM: &str = "-vm";
-static WS: &str = "-ws";
-static NAME: &str = "-name";
-static PROTECT: &str = "-protect";
-
-static OPENFILE: &str = "--launcher.openFile";
-static DEFAULTACTION: &str = "--launcher.defaultAction";
-static TIMEOUT: &str = "--launcher.timeout";
-static LIBRARY: &str = "--launcher.library";
-static SUPRESSERRORS: &str = "--launcher.suppressErrors";
-static INI: &str = "--launcher.ini";
-static APPEND_VMARGS: &str = "--launcher.appendVmargs";
-static OVERRIDE_VMARGS: &str = "--launcher.overrideVmargs";
-static SECOND_THREAD: &str = "--launcher.secondThread";
-static PERM_GEN: &str = "--launcher.XXMaxPermSize";
-static GTK_VERSION: &str = "--launcher.GTK_version";
 
 pub(super) fn parse_args<T: AsRef<str>>(args: &[T]) -> EclipseParams {
     let mut parser = Parser::new();

@@ -12,16 +12,15 @@
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
 
-//! This module is empty and just exporting it's sub-modules.
-//! The sub-modules provide common functionality used by the
-//! `eclipse-launcher` and `eclipse-library` projects.
+use crate::vm_lookup::JvmLaunchMode;
+use std::borrow::Cow;
 
-pub mod arg_parser;
-pub mod exe_util;
-pub mod ini_reader;
-pub mod messagebox;
-pub mod name_util;
-pub mod native_str;
-pub mod option_util;
-pub mod path_util;
-pub mod eclipse_params_flags;
+static default_args: Vec<Cow<'static,str>> = Vec::from("-XstartOnFirstThread".into());
+
+pub fn is_modular_vm(vm_path: &JvmLaunchMode) -> bool {
+    unimplemented!()
+}
+
+pub fn default_vm_args() -> Vec<Cow<'static,str>> {
+    default_args
+}

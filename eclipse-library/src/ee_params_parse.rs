@@ -31,19 +31,20 @@ const EE_LIBRARY_PATH: &str = "-Dee.library.path";
 const EE_FILENAME: &str = "-Dee.filename";
 const EE_HOME: &str = "-Dee.home";
 
-pub fn parse_ee_params(ee_file: &Path) -> Result<EclipseEEProps, Error> {
-    let ee_file_str = ee_file.to_string_lossy().to_string();
+pub fn read_ee_file(ee_file: &Path) ->  Result<Vec<String>, Error> {
+    // Read EE file
+    let lines = read_ini_lines(ee_file)?.collect();
+    Ok(lines)
+}
 
+pub fn parse_ee_params<S: AsRef<str>>(ee_file: &Path, ee_file_lines: &[S]) -> Result<EclipseEEProps, Error> {
     let ee_dir_cow: Option<Cow<'_, str>> = ee_file.parent().map(Path::to_string_lossy);
     // we need to strip UNC prefix on windows, because creating a Path from a string with UNC
     // prefix leads to problems down the road.
     let ee_dir: Option<&str> = ee_dir_cow.as_ref().map(|s| &**s).map(strip_unc_prefix);
 
-    // Read EE file
-    let lines: Vec<String> = read_ini_lines(ee_file)?.collect();
-
     // Strategy: split at '=' and use command line parser to work for us
-    let split_lines = lines.iter().flat_map(|line| line.splitn(2, '='));
+    let split_lines = ee_file_lines.iter().map(AsRef::as_ref).flat_map(|line| line.splitn(2, '='));
 
     // Configure parser
     let mut parser = Parser::new();
@@ -74,6 +75,7 @@ pub fn parse_ee_params(ee_file: &Path) -> Result<EclipseEEProps, Error> {
             .collect()
     });
     let ee_dir_str = ee_dir.unwrap_or_default().to_string();
+    let ee_file_str = ee_file.to_string_lossy().to_string();
 
     let result = EclipseEEProps {
         ee_console: console_param,
@@ -87,7 +89,7 @@ pub fn parse_ee_params(ee_file: &Path) -> Result<EclipseEEProps, Error> {
 }
 
 impl EclipseEEProps {
-    pub fn to_vm_command_line_args(&self, console: bool) -> Vec<String> {
+    pub fn to_vm_command_line_args(&self) -> Vec<String> {
         // Paths in ee_lib_path need to be joined with separating PATHS_SEPARATOR
         let paths_joined = self.ee_lib_path.as_ref().map(|p| join_paths(&p));
 
@@ -121,7 +123,7 @@ fn join_paths<S: AsRef<str>>(paths: &[S]) -> String {
     if let Some(first) = iter.next() {
         result.push_str(first.as_ref());
     }
-    while let Some(item) = iter.next() {
+    for item in iter {
         result.push(PATHS_SEPARATOR);
         result.push_str(item.as_ref());
     }

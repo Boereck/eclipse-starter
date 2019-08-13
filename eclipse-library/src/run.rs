@@ -14,14 +14,15 @@
 
 use crate::eclipse_params_parse::parse_args;
 use crate::errors::EclipseLibErr;
-use crate::params::EclipseParams;
-use crate::vm_args_read::complete_vm_args;
-use crate::vm_lookup::{determine_vm};
 use crate::jar_lookup::find_startup_jar;
-use crate::shared_mem::{SharedMem, create_shared_mem, MAX_SHARED_LENGTH};
+use crate::params::EclipseParams;
+use crate::shared_mem::{create_shared_mem, SharedMem, MAX_SHARED_LENGTH};
+use crate::vm_args_read::complete_vm_args;
 use crate::vm_command::get_vm_command;
+use crate::vm_lookup::determine_vm;
 use eclipse_common::name_util::get_default_official_name_from_str;
-use std::path::{Path};
+use eclipse_common::path_util::strip_unc_prefix;
+use std::path::Path;
 
 const ACTION_OPENFILE: &str = "openFile";
 
@@ -39,6 +40,11 @@ pub fn run_framework<S: AsRef<str>>(
         let default_name = get_default_official_name_from_str(&program);
         parsed_args.name = default_name;
     }
+    // We prefer the library passed to this program instead parsed from parameter
+    // since the launcher allready did path resolution.
+    let library_str = &library.to_string_lossy();
+    let library_str = strip_unc_prefix(library_str);
+    parsed_args.library.replace(library_str.to_string());
 
     // TODO: on Mac start second thread if parsed_args.second_thread
 
@@ -54,21 +60,30 @@ pub fn run_framework<S: AsRef<str>>(
     // Find the directory where the Eclipse program is installed. If not able to, return Err
     let program_dir = program_path.parent().ok_or(EclipseLibErr::HomeNotFound)?;
 
-    let complete_vm_args = complete_vm_args(vm_args, &parsed_args, &program_path);
-
-    let vm_path = determine_vm(&parsed_args, program_dir)?;
-    dbg!(&vm_path);
-    
     // find startup jar
     let jar_file = find_startup_jar(&parsed_args, program_dir)?;
+    let jar_file_str = strip_unc_prefix(&jar_file.to_string_lossy()).to_string();
+    parsed_args.startup = Some(jar_file_str);
+
+    let complete_vm_args = complete_vm_args(vm_args, &parsed_args, &program_path)?;
+
+    let vm_path = determine_vm(&parsed_args, program_dir)?;
 
     // TODO: on windows: if( launchMode == LAUNCH_JNI && (debug || needConsole) ) createConsole
     // TODO: show splash if needed
-    
     // not using JNI launching, need some shared data
     let shared_data = create_shared_mem(MAX_SHARED_LENGTH)?;
 
-    get_vm_command(&vm_path, args, vm_args, initial_args, &jar_file);
+    let vm_command = get_vm_command(
+        &vm_path,
+        args,
+        &complete_vm_args,
+        initial_args,
+        &jar_file,
+        &parsed_args,
+        shared_data.get_id(),
+        program_path,
+    );
     // TODO: Port rest of run from C
     Ok(())
 }

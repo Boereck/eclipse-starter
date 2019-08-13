@@ -105,7 +105,7 @@ mod test {
 
         shared_ref.close()?;
         shared_data.close()?;
-
+        
         assert_eq!("Foo", result);
         Ok(())
     }

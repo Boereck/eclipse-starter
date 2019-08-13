@@ -18,7 +18,7 @@ mod common;
 #[cfg_attr(target_os = "windows", path = "windows.rs")]
 mod os;
 
-use crate::ee_params_parse::parse_ee_params;
+use crate::ee_params_parse::*;
 use crate::errors::EclipseLibErr;
 use crate::params::EclipseParams;
 use common::is_vm_library_ext;
@@ -92,7 +92,7 @@ fn get_vm_from_dir(
         found_lib_path
             .map(|p| {
                 // JNI library found
-                JvmLaunchMode::LaunchJni { jni_lib: p }
+                JvmLaunchMode::LaunchJni { jni_lib: p, add_vm_args: Vec::new() }
             })
             .ok_or_else(|| {
                 // found nothing, return error
@@ -107,12 +107,15 @@ fn get_ee_vm<P: AsRef<Path>>(
     params: &EclipseParams,
 ) -> Result<JvmLaunchMode, EclipseLibErr> {
     let ee_path = ee_path_source.as_ref();
-    let parsed_props = parse_ee_params(ee_path).map_err(|_| no_vm_found_err(params, &[ee_path]))?;
+    let ee_lines = read_ee_file(ee_path).map_err(|_| no_vm_found_err(params, &[ee_path]))?;
+    let parsed_props = parse_ee_params(ee_path, &ee_lines).map_err(|_| no_vm_found_err(params, &[ee_path]))?;
+    let ee_vm_args = parsed_props.to_vm_command_line_args();
+    
     if let Some(lib_path_str) = opt_str(&parsed_props.ee_vm_libary) {
         let lib_path = Path::new(lib_path_str);
         let vm_lib_opt = os::find_vm_library(lib_path, program_dir, params, Some(&parsed_props));
         if let Some(vm_lib) = vm_lib_opt {
-            let result = JvmLaunchMode::LaunchJni { jni_lib: vm_lib };
+            let result = JvmLaunchMode::LaunchJni { jni_lib: vm_lib, add_vm_args:  ee_vm_args};
             return Ok(result);
         }
     }
@@ -121,7 +124,7 @@ fn get_ee_vm<P: AsRef<Path>>(
         if let Some(console_path_str) = opt_str(&parsed_props.ee_console) {
             let vm_path_opt = find_program(console_path_str);
             if let Some(vm_path) = vm_path_opt {
-                let result = JvmLaunchMode::LaunchExe { exe: vm_path };
+                let result = JvmLaunchMode::LaunchExe { exe: vm_path, add_vm_args: ee_vm_args };
                 return Ok(result);
             }
         }
@@ -129,7 +132,7 @@ fn get_ee_vm<P: AsRef<Path>>(
     if let Some(vm_path_str) = opt_str(&parsed_props.ee_executable) {
         let vm_path_opt = find_program(vm_path_str);
         if let Some(vm_path) = vm_path_opt {
-            let result = JvmLaunchMode::LaunchExe { exe: vm_path };
+            let result = JvmLaunchMode::LaunchExe { exe: vm_path, add_vm_args: ee_vm_args };
             return Ok(result);
         }
     }
@@ -157,6 +160,7 @@ fn get_vm_library(
     })?;
     let result = JvmLaunchMode::LaunchJni {
         jni_lib: result_lib_path,
+        add_vm_args: Vec::new(),
     };
     Ok(result)
 }
@@ -184,6 +188,7 @@ fn get_vm_exe(
     } else {
         let result = JvmLaunchMode::LaunchExe {
             exe: resolved_vm_path,
+            add_vm_args: Vec::new(),
         };
         Ok(result)
     }
@@ -198,10 +203,12 @@ fn launch_mode_from_jvm_exe_path(
         if let Some(jvm_lib_path) = os::find_vm_library(&jvm_exe_path, program_dir, params, None) {
             return JvmLaunchMode::LaunchJni {
                 jni_lib: jvm_lib_path,
+                add_vm_args: Vec::new(),
             };
         }
     }
-    JvmLaunchMode::LaunchExe { exe: jvm_exe_path }
+    JvmLaunchMode::LaunchExe { exe: jvm_exe_path,
+        add_vm_args: Vec::new(), }
 }
 
 /// Depending if the given `vm_path` is a directory,
@@ -273,7 +280,7 @@ fn find_jvm(
     if cfg!(target_os = "windows") && java_vm_result.is_err() {
         let lib_result = os::find_vm_library(Path::new(""), program_dir, params, None);
         if let Some(lib_path) = lib_result {
-            let result = JvmLaunchMode::LaunchJni { jni_lib: lib_path };
+            let result = JvmLaunchMode::LaunchJni { jni_lib: lib_path, add_vm_args: Vec::new(), };
             return Ok(result);
         }
     }
@@ -301,8 +308,8 @@ fn no_vm_found_err(params: &EclipseParams, search_paths: &[&Path]) -> EclipseLib
 
 #[derive(Debug)]
 pub enum JvmLaunchMode {
-    LaunchJni { jni_lib: PathBuf },
-    LaunchExe { exe: PathBuf },
+    LaunchJni { jni_lib: PathBuf, add_vm_args: Vec<String> },
+    LaunchExe { exe: PathBuf, add_vm_args: Vec<String> },
 }
 
 #[derive(Debug)]

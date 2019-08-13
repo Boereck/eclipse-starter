@@ -13,15 +13,12 @@
  *******************************************************************************/
 
 use crate::vm_lookup::JvmLaunchMode;
-use std::path::Path;
+use std::borrow::Cow;
 
-// Get the command and arguments to start the Java VM.
-pub fn get_vm_command<'a, 'b, 'c, 'd, 'e, S: AsRef<str>>(launch_mode: &JvmLaunchMode,
-    args: &'a [S],
-    vm_args: &'b [S],
-    initial_args: &'c [S],
-    jar_file: &'d Path,) -> Vec<&'e str> 
-    where 'a: 'e, 'b: 'e, 'c: 'e, 'd: 'e {
-    let result: Vec<&str> = Vec::new();
-    unimplemented!();
+pub fn is_modular_vm(vm_path: &JvmLaunchMode) -> bool {
+    unimplemented!()
+}
+
+pub fn default_vm_args() -> Vec<Cow<'static,str>> {
+    Vec::new()
 }

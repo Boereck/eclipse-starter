@@ -33,6 +33,7 @@ mod params;
 
 use eclipse_common::arg_parser::*;
 use eclipse_common::ini_reader::*;
+use eclipse_common::eclipse_params_flags::*;
 use eclipse_common::option_util::opt_str;
 use eclipse_common::name_util::get_default_official_name;
 use eclipse_common::messagebox::display_message;
@@ -56,15 +57,6 @@ static MSG_ROOT_ERR: &str =
     "executable launcher is configured to not start with administrative privileges.";
 
 static ROOT: &str = "root";
-
-// Possible launcher executable arguments
-
-const NAME_ARG: &str = "-name";
-const LAUNCHER_LIB_ARG: &str = "--launcher.library";
-const SUPPRESS_ERRORS_ARGS: &str = "--launcher.suppressErrors";
-const PROTECT_ARG: &str = "-protect";
-const LAUNCHER_INI_ARG: &str = "--launcher.ini";
-const VMARGS_ARG: &str = "-vmargs";
 
 fn main() {
     let mut params = EclipseLauncherParams::default();
@@ -104,7 +96,7 @@ fn fallible_main(params: &mut EclipseLauncherParams) -> Result<(), LauncherError
     if let Ok(ini_file_lines) = read_ini(&params.launcher_ini, &exe_path) {
         // we strip vmargs off (since the original launcher had this behavior,
         // see eclipseMain.c main calling parseArgs with useVMargs = 0)
-        let ini_lines_no_vmargs = ini_file_lines.take_while(|s| s != VMARGS_ARG);
+        let ini_lines_no_vmargs = ini_file_lines.take_while(|s| s != VMARGS);
         // store ini lines in vector for later usage
         ini_file_args.extend(ini_lines_no_vmargs);
         parse_arguments(params, ini_file_args.iter().map(String::as_str));
@@ -196,12 +188,12 @@ fn parse_arguments<'a, 'b>(
     let mut parser: Parser = Parser::new();
 
     // Define parameters to parse
-    let name = parser.add_option(NAME_ARG);
-    let eclipse_library = parser.add_option(LAUNCHER_LIB_ARG);
-    let protect = parser.add_option(PROTECT_ARG);
-    let suppress_errors = parser.add_flag(SUPPRESS_ERRORS_ARGS);
-    let launcher_ini = parser.add_option(LAUNCHER_INI_ARG);
-    let vm_args = parser.add_list(VMARGS_ARG, ListParseStyle::AllRemaining);
+    let name = parser.add_option(NAME);
+    let eclipse_library = parser.add_option(LIBRARY);
+    let protect = parser.add_option(PROTECT);
+    let suppress_errors = parser.add_flag(SUPRESSERRORS);
+    let launcher_ini = parser.add_option(INI);
+    let vm_args = parser.add_list(VMARGS, ListParseStyle::AllRemaining);
 
     let mut parse_result = parser.parse(args);
 

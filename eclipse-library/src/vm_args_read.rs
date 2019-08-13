@@ -23,8 +23,10 @@ use eclipse_common::ini_reader::read_ini_lines;
 use std::path::Path;
 #[cfg(target_os = "macos")]
 use std::path::PathBuf;
+use std::borrow::Cow;
 
 static VM_ARGS_PARAM: &str = "-vmargs";
+
 
 /// Returns all JVM paramters needed to start the framework. This will take
 /// the given `vm_args` from command line into account as well as the parameters
@@ -32,15 +34,15 @@ static VM_ARGS_PARAM: &str = "-vmargs";
 /// from `vm_args` are returned (except if `vm_args` is empty, in this case the arguments
 /// from ini file(s) are taken). If `params.append_vmargs` is `true` the vm args are read from
 /// ini file(s) and the `vm_args` are appended.
-pub fn complete_vm_args<S: AsRef<str>>(
-    vm_args: &[S],
-    params: &EclipseParams,
-    program: &Path,
-) -> Result<Vec<String>, EclipseLibErr> {
-    let mut result: Vec<String> = Vec::new();
+pub fn complete_vm_args<'a, 'b, S: AsRef<str>>(
+    vm_args: &'a [S],
+    params: &'a EclipseParams,
+    program: &'a Path,
+) -> Result<Vec<Cow<'b, str>>, EclipseLibErr> where 'a : 'b {
+    let mut result: Vec<Cow<'b,str>> = Vec::new();
 
     // VM args from command line
-    let vm_args_iter = vm_args.iter().map(AsRef::as_ref).map(ToOwned::to_owned);
+    let vm_args_iter = vm_args.iter().map(AsRef::as_ref).map(Cow::from);
     let vm_args_present = !vm_args.is_empty();
 
     // If we have command line VM args and ini vm args are not appended,
@@ -51,12 +53,18 @@ pub fn complete_vm_args<S: AsRef<str>>(
         return Ok(result);
     }
 
+    // shortcut to transform an IntoIterator<Item = String> into an Iterator<Cow<'_,str>>
+    macro_rules! to_cows {
+        ($e:expr) => ( $e.into_iter().map(|s| s.into()) )
+    }
+
     // Read VM args from ini file(s)
     if cfg!(target_os = "macos") {
         let ini_params = vm_args_from_launcher_ini_from_config(params, program);
-        result.extend(ini_params);
+        result.extend(to_cows!(ini_params));
     }
-    result.extend(vm_args_from_config(params, program));
+    let config_vm_args_iter = to_cows!(vm_args_from_config(params, program));
+    result.extend(config_vm_args_iter);
 
     // Add VM args from command-line (may be empty)
     if vm_args_present {
