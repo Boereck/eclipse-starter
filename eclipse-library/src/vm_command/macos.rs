@@ -15,7 +15,7 @@
 use crate::vm_lookup::JvmLaunchMode;
 use std::borrow::Cow;
 
-static default_args: Vec<Cow<'static,str>> = Vec::from("-XstartOnFirstThread".into());
+static default_args: Vec<Cow<'static,str>> = vec!["-XstartOnFirstThread".into()];
 
 pub fn is_modular_vm(vm_path: &JvmLaunchMode) -> bool {
     unimplemented!()
