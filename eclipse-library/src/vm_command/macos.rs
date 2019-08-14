@@ -22,5 +22,5 @@ pub fn is_modular_vm(vm_path: &JvmLaunchMode) -> bool {
 }
 
 pub fn default_vm_args() -> Vec<Cow<'static,str>> {
-    default_args
+    default_args.clone()
 }
