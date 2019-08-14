@@ -30,8 +30,8 @@ use winapi::um::memoryapi::FILE_MAP_WRITE;
 use winapi::um::processthreadsapi::GetCurrentProcess;
 use winapi::um::processthreadsapi::OpenProcess;
 use winapi::um::winnt::DUPLICATE_SAME_ACCESS;
-use winapi::um::winnt::PROCESS_ALL_ACCESS;
 use winapi::um::winnt::PAGE_READWRITE;
+use winapi::um::winnt::PROCESS_ALL_ACCESS;
 
 pub struct SharedMemOS {
     map_handle: HANDLE,
@@ -231,7 +231,6 @@ impl SharedMemRef for SharedMemRefOS {
     fn close(mut self) -> Result<(), EclipseLibErr> {
         self.close_internal()
     }
-
 }
 
 impl SharedMemRefOS {

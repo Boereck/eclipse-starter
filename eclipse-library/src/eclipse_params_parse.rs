@@ -15,11 +15,15 @@
 //! Parses commandline arguments into an instance of `EclipseParams`
 
 use super::params::EclipseParams;
-use eclipse_common::eclipse_params_flags::*;
 use eclipse_common::arg_parser::{ListParseStyle, Parser};
+use eclipse_common::eclipse_params_flags::*;
 
-pub(super) fn parse_args<T: AsRef<str>>(args: &[T]) -> EclipseParams {
+/// Parses the given arguments and returns the parsed parameters (as an `EclipseParams`)
+/// and the arguments that were not able to be parsed (as the second element of the tuple).
+pub(super) fn parse_args<'a, T: AsRef<str>>(args: &'a [T]) -> (EclipseParams, Vec<&'a str>) {
     let mut parser = Parser::new();
+
+    // Add rules for all parameters
     let console_id = parser.add_optional_option(CONSOLE);
     let console_log_id = parser.add_flag(CONSOLELOG);
     let debug_id = parser.add_optional_option(DEBUG);
@@ -43,10 +47,13 @@ pub(super) fn parse_args<T: AsRef<str>>(args: &[T]) -> EclipseParams {
     let second_thread_id = parser.add_flag(SECOND_THREAD);
     let perm_gen_id = parser.add_flag(PERM_GEN);
     let gtk_version_id = parser.add_option(GTK_VERSION);
+
     let iter = args.iter().map(|s| s.as_ref());
     let mut parse_result = parser.parse(iter);
+    let remainder = parse_result.get_remainder();
+
     //TODO adjust paths of openfile
-    EclipseParams {
+    let result_params = EclipseParams {
         console: parse_result.take_optional_option(console_id),
         console_log: parse_result.take_flag(console_log_id),
         debug: parse_result.take_optional_option(debug_id),
@@ -70,5 +77,6 @@ pub(super) fn parse_args<T: AsRef<str>>(args: &[T]) -> EclipseParams {
         second_thread: parse_result.take_flag(second_thread_id),
         perm_gen: parse_result.take_flag(perm_gen_id),
         gtk_version: parse_result.take_option(gtk_version_id),
-    }
+    };
+    (result_params, remainder)
 }

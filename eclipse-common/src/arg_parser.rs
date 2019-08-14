@@ -186,18 +186,22 @@ impl Parser {
     /// Parses the given `args` according to the rules previously registered on the
     /// parser via `add_*` functions. Returns the parsing results which can be queried
     /// for results using the `take_*` functions.
-    pub fn parse<'a, 'b>(&'a self, args: impl IntoIterator<Item = &'b str>) -> ParseResult {
+    pub fn parse<'a, 'b>(&'a self, args: impl IntoIterator<Item = &'b str>) -> ParseResult<'b> {
         let mut found_flags = HashSet::<FlagId>::new();
         let mut found_options = HashMap::<OptionId, String>::new();
         let mut found_optionaloptions = HashMap::<OptionalOptionId, OptionalParam>::new();
         let mut found_list: Option<(ListId, Vec<String>)> = None;
         let mut iter = args.into_iter().peekable();
+        let mut remaining_args = Vec::new(); 
         'parse_loop: while let Some(ref arg_name) = iter.next() {
             let key: &str = arg_name;
             // is this an argument to parse?
             let arg = match self.args_by_name.get(key) {
                 Some(arg) => arg,
-                None => continue,
+                None => {
+                    remaining_args.push(*arg_name);
+                    continue;
+                },
             };
             use ArgumentType::*;
             // apply parsing rule
@@ -259,6 +263,7 @@ impl Parser {
             options: found_options,
             optionaloptions: found_optionaloptions,
             list: found_list,
+            remainder: remaining_args,
         }
     }
 }
@@ -269,15 +274,16 @@ impl Default for Parser {
     }
 }
 
-pub struct ParseResult {
+pub struct ParseResult<'s> {
     // TODO list of parse errors?
     flags: HashSet<FlagId>,
     options: HashMap<OptionId, String>,
     optionaloptions: HashMap<OptionalOptionId, OptionalParam>,
     list: Option<(ListId, Vec<String>)>,
+    remainder: Vec<&'s str>,
 }
 
-impl ParseResult {
+impl <'s> ParseResult<'s> {
     pub fn take_option(&mut self, arg: OptionId) -> Option<String> {
         self.options.remove(&arg)
     }
@@ -298,6 +304,10 @@ impl ParseResult {
             .take()
             .filter(|(list_arg, _)| list_arg == &arg)
             .map(|(_, list)| list)
+    }
+
+    pub fn get_remainder(&self) -> Vec<&'s str> {
+        self.remainder.clone()
     }
 }
 

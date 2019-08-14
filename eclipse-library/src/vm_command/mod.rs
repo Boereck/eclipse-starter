@@ -30,6 +30,7 @@ use std::path::Path;
 const CLASSPATH_PREFIX: &str = "-Djava.class.path=";
 const ADDMODULES: &str = "--add-modules";
 
+#[derive(Debug)]
 pub struct VmArgs<'e> {
     vm_args: Vec<Cow<'e, str>>,
     program_args: Vec<Cow<'e, str>>,
@@ -38,7 +39,7 @@ pub struct VmArgs<'e> {
 /// Get the command and arguments to start the Java VM.
 pub fn get_vm_command<'a, 'b, S: AsRef<str>>(
     launch_mode: &'a JvmLaunchMode,
-    args: &'a [S],
+    args: &'a [&str],
     user_vm_args: &'a [Cow<'a, str>],
     initial_args: &'a [S],
     jar_file: &'a Path,
@@ -203,7 +204,9 @@ where
         JvmLaunchMode::LaunchJni { jni_lib, .. } => jni_lib,
         JvmLaunchMode::LaunchExe { exe, .. } => exe,
     };
-    result_program_params.push(vm_location.to_string_lossy());
+    let vm_cow = vm_location.to_string_lossy();
+    let vm_str = strip_unc_prefix(&vm_cow).to_string();
+    result_program_params.push(vm_str.into());
 
     result_program_params.push(VMARGS.into());
     // cloning of Cows can be expensive for owned variants,
@@ -275,7 +278,7 @@ fn remove_modular_vm_args(vm_args: &mut Vec<Cow<'_, str>>) {
         } else {
             // Probable new argument e.g. --add-modules-if-required or misspelled argument e.g. --add-modulesq
             skip += 1; // we skip this element which remains in the vec
-        };
+        }
     }
 }
 

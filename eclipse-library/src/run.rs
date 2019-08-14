@@ -32,7 +32,7 @@ pub fn run_framework<S: AsRef<str>>(
     initial_args: &[S],
     library: &Path,
 ) -> Result<(), EclipseLibErr> {
-    let mut parsed_args = parse_args(args);
+    let (mut parsed_args, remaining_args) = parse_args(args);
 
     let program = args.get(0).map(|s| s.as_ref()).unwrap_or_default();
     let program_path = Path::new(program);
@@ -76,7 +76,7 @@ pub fn run_framework<S: AsRef<str>>(
 
     let vm_command = get_vm_command(
         &vm_path,
-        args,
+        &remaining_args,
         &complete_vm_args,
         initial_args,
         &jar_file,
@@ -84,6 +84,7 @@ pub fn run_framework<S: AsRef<str>>(
         shared_data.get_id(),
         program_path,
     );
+    dbg!(vm_command);
     // TODO: Port rest of run from C
     Ok(())
 }

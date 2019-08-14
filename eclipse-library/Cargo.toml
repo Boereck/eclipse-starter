@@ -39,7 +39,7 @@ jni-mangle = { path = "../jni-mangle" }
 shared_memory = "0.8.2"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-winapi = { version = "0.3.7", features = ["wincon", "winreg"]}
+winapi = { version = "0.3.7", features = ["wincon", "winreg", "winver"]}
 
 [features]
 # When selected will not try by default to start JVM from JNI library, but will call exe
