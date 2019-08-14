@@ -15,12 +15,12 @@
 use crate::vm_lookup::JvmLaunchMode;
 use std::borrow::Cow;
 
-static default_args: Vec<Cow<'static,str>> = vec!["-XstartOnFirstThread".into()];
+static DEFAULT_ARGS: [&str;1] = ["-XstartOnFirstThread"];
 
 pub fn is_modular_vm(vm_path: &JvmLaunchMode) -> bool {
     unimplemented!()
 }
 
 pub fn default_vm_args() -> Vec<Cow<'static,str>> {
-    default_args.clone()
+    DEFAULT_ARGS.iter().map(|s| Cow::from(*s)).collect()
 }
