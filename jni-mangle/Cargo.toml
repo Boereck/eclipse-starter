@@ -19,7 +19,6 @@ license = "EPL-2.0"
 
 [lib]
 proc-macro = true
-crate-type = ["proc-macro"]
 
 [dependencies]
 syn = { version = "0.15.42", features = ["full"] }

@@ -18,8 +18,9 @@ use crate::jar_lookup::find_startup_jar;
 use crate::params::EclipseParams;
 use crate::shared_mem::{create_shared_mem, SharedMem, MAX_SHARED_LENGTH};
 use crate::vm_args_read::complete_vm_args;
-use crate::vm_command::get_vm_command;
-use crate::vm_lookup::determine_vm;
+use crate::vm_command::{get_vm_command, VmArgs};
+use crate::vm_lookup::{determine_vm, JvmLaunchMode};
+use crate::vm_launch::JavaLauncher;
 use eclipse_common::name_util::get_default_official_name_from_str;
 use eclipse_common::path_util::strip_unc_prefix;
 use std::path::Path;
@@ -78,13 +79,26 @@ pub fn run_framework<S: AsRef<str>>(
         &vm_path,
         &remaining_args,
         &complete_vm_args,
-        initial_args,
         &jar_file,
         &parsed_args,
         shared_data.get_id(),
         program_path,
     );
-    dbg!(vm_command);
+    dbg!(&vm_command);
+
+    let vm_launcher = JavaLauncher::new(&vm_path, &vm_command, &jar_file);
+    dbg!(&vm_launcher);
+
+    // While the Java VM should be restarted
+    let mut running = true;
+    while running {
+        // TODO: store vm command as message
+        // TODO: if -debug, print start command to console
+        // TODO: Handle result (restart if necessary)
+        vm_launcher.launch()?;
+        running = false;
+    }
+
     // TODO: Port rest of run from C
     Ok(())
 }

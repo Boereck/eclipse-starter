@@ -32,16 +32,15 @@ const ADDMODULES: &str = "--add-modules";
 
 #[derive(Debug)]
 pub struct VmArgs<'e> {
-    vm_args: Vec<Cow<'e, str>>,
-    program_args: Vec<Cow<'e, str>>,
+    pub vm_args: Vec<Cow<'e, str>>,
+    pub program_args: Vec<Cow<'e, str>>,
 }
 
 /// Get the command and arguments to start the Java VM.
-pub fn get_vm_command<'a, 'b, S: AsRef<str>>(
+pub fn get_vm_command<'a, 'b>(
     launch_mode: &'a JvmLaunchMode,
     args: &'a [&str],
     user_vm_args: &'a [Cow<'a, str>],
-    initial_args: &'a [S],
     jar_file: &'a Path,
     params: &'a EclipseParams,
     exitdata: &'a str,
@@ -135,6 +134,9 @@ where
         + param_count(&exitdata)
         + opt_param_count(&params.startup)
         + opt_param_count(&params.vm)
+        + opt_opt_param_count(&params.console)
+        + opt_opt_param_count(&params.debug)
+        + opt_flag_count(params.console_log)
         + opt_flag_count(params.append_vmargs) // or override
         + args.len()
         + flag_count(VM)
@@ -194,6 +196,33 @@ where
     // Append the exit data command.
     result_program_params.push(EXITDATA.into());
     result_program_params.push(exitdata.into());
+
+    // The following three parameters are used by the launcher, but are also
+    // delegated to the java program
+
+    // Append the console command, if set add value
+    match &params.console {
+        SetNoVal => result_program_params.push(CONSOLE.into()),
+        Set(param_val) => {
+            result_program_params.push(CONSOLE.into());
+            result_program_params.push(param_val.into());
+        },
+        _ => {}
+    }
+
+    // Append the console command, if set add value
+    match &params.debug {
+        SetNoVal => result_program_params.push(DEBUG.into()),
+        Set(param_val) => {
+            result_program_params.push(DEBUG.into());
+            result_program_params.push(param_val.into());
+        },
+        _ => {}
+    }
+
+    if params.console_log {
+            result_program_params.push(CONSOLELOG.into());
+    }
 
     // Append the remaining user defined arguments.
     result_program_params.extend(args.iter().map(AsRef::as_ref).map(Into::into));

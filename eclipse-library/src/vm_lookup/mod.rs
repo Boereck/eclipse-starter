@@ -147,7 +147,6 @@ fn get_vm_library(
     program_dir: &Path,
     params: &EclipseParams,
 ) -> Result<JvmLaunchMode, EclipseLibErr> {
-    // TODO: on macos skipJava9ParamRemoval = 1 ??
     let lib_path_resolved = find_program_path(lib_path)
         .and_then(|path| os::find_vm_library(&path, program_dir, params, None));
     let result_lib_path = lib_path_resolved.ok_or_else(|| {

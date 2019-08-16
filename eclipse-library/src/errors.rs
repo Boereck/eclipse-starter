@@ -31,6 +31,15 @@ pub enum EclipseLibErr {
     SharedMemoryCloseFail,
     SharedMemoryReadInvalidStr,
     SharedMemoryIdParseFail,
+    LaunchFail(VmLaunchErr),
+}
+
+impl From<VmLaunchErr> for EclipseLibErr {
+
+    fn from(err: VmLaunchErr) -> EclipseLibErr {
+        EclipseLibErr::LaunchFail(err)
+
+    }
 }
 
 impl fmt::Display for EclipseLibErr {
@@ -41,4 +50,20 @@ impl fmt::Display for EclipseLibErr {
 }
 
 impl Error for EclipseLibErr {
+}
+
+#[derive(Debug)]
+pub enum VmLaunchErr {
+    StartFail(VmStartErr),
+    RunFail(VmRunErr),
+}
+
+#[derive(Debug)]
+pub enum VmRunErr {
+    UnknownErr
+}
+
+#[derive(Debug)]
+pub enum VmStartErr {
+    ExeStartErr(std::io::Error)
 }

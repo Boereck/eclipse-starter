@@ -19,6 +19,9 @@
 //! over the parameters.
 //! To get the results for parsing rules, the id values returned from the `add_*`
 //! methods need to be passed to the `take_*` methods on the `ParseResult`.
+//! 
+//! Arguments that were not parsed are aggregated in a `Vec` and can be retrieved
+//! by calling `get_remainder` on the `ParseResult`.
 //!
 //! Example:
 //! ```
@@ -399,5 +402,18 @@ mod parser_test {
         let mut parse_result = parser.parse(iter);
         let console_value = parse_result.take_optional_option(console);
         assert_eq!(console_value, OptionalParam::Set("localhost:9090".into()));
+    }
+
+    #[test]
+    fn test_remaider() {
+        let args = vec!["-clean", "-console", "localhost:9090", "-application", "foo.bar"];
+        let iter = args.iter().copied();
+        let mut parser = super::Parser::new();
+        let _application = parser.add_option("-console");
+        let parse_result = parser.parse(iter);
+        let remainder = parse_result.get_remainder();
+        let mut expected = args.clone();
+        expected.drain(1..=2);
+        assert_eq!(expected, remainder);
     }
 }

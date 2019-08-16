@@ -31,6 +31,7 @@ pub struct EclipseParams {
 
     /// equivalent to setting osgi.arch to <architecture>
     pub arch: Option<String>,
+
     /// controls whether or not the splash screen is shown
     pub nosplash: bool,
 
@@ -65,6 +66,7 @@ pub struct EclipseParams {
     pub default_action: Option<String>,
     pub timeout: Option<String>,
     pub suppress_errors: bool,
+
     /// The location of the eclipse executable's companion shared library.  
     /// If not specified the executable looks in the plugins directory for the appropriate
     /// org.eclipse.equinox.launcher.[platform] fragment with the highest version and uses
