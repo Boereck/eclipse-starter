@@ -21,7 +21,7 @@ pub struct PtrIter<T>(*mut T);
 
 /// Creates an iterator, starting at the element the given `ptr`
 /// is pointed to. The returned iterator is unbound simply moving
-/// the pointer to the next �T� element in memory.
+/// the pointer to the next <T> element in memory.
 ///
 /// Warning: do not use for zero-sized types
 pub fn iter<T>(ptr: *mut T) -> PtrIter<T> {

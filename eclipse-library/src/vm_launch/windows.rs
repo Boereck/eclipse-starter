@@ -12,11 +12,15 @@
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
 
-//! This module contains a methods working on certain specializations of the `Option` type.
+use std::time::Duration;
 
-/// Turns an `&Option<String>` into an `Option<&str>`; this can
-/// be useful if the String must not be removed from the soure optional
-/// or if an optional should be compared to a static `&str`.
-pub fn opt_str(opt: &Option<String>) -> Option<&str> {
-    opt.as_ref().map(String::as_str)
+pub fn program_loop(mut is_term_callback: impl FnMut() -> bool) {
+    let dur = Duration::from_millis(100);
+    loop {
+        // TODO: platform GUI specific stuff
+        if is_term_callback() {
+            return;
+        }
+        std::thread::sleep(dur);
+    }
 }

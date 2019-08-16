@@ -12,7 +12,7 @@
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
 
-//! TODO: document
+//! This module is helping with finding executables and normalizing paths to executables.
 
 use crate::path_util::*;
 use std::path::{Path, PathBuf};

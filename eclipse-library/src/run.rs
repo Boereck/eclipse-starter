@@ -19,8 +19,8 @@ use crate::params::EclipseParams;
 use crate::shared_mem::{create_shared_mem, SharedMem, MAX_SHARED_LENGTH};
 use crate::vm_args_read::complete_vm_args;
 use crate::vm_command::{get_vm_command, VmArgs};
-use crate::vm_lookup::{determine_vm, JvmLaunchMode};
 use crate::vm_launch::JavaLauncher;
+use crate::vm_lookup::{determine_vm, JvmLaunchMode};
 use eclipse_common::name_util::get_default_official_name_from_str;
 use eclipse_common::path_util::strip_unc_prefix;
 use std::path::Path;
@@ -70,6 +70,7 @@ pub fn run_framework<S: AsRef<str>>(
 
     let vm_path = determine_vm(&parsed_args, program_dir)?;
 
+    // TODO: reuse running eclipse if params.openfile is Some
     // TODO: on windows: if( launchMode == LAUNCH_JNI && (debug || needConsole) ) createConsole
     // TODO: show splash if needed
     // not using JNI launching, need some shared data
@@ -84,10 +85,8 @@ pub fn run_framework<S: AsRef<str>>(
         shared_data.get_id(),
         program_path,
     );
-    dbg!(&vm_command);
 
     let vm_launcher = JavaLauncher::new(&vm_path, &vm_command, &jar_file);
-    dbg!(&vm_launcher);
 
     // While the Java VM should be restarted
     let mut running = true;

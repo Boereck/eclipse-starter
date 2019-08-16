@@ -13,12 +13,12 @@
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
 
+use crate::shared_mem::{crete_shared_mem_ref, SharedMemRef, MAX_SHARED_LENGTH};
 use jni::objects::{JObject, JString};
 use jni::sys::{jlong, jstring};
 use jni::JNIEnv;
 use jni_mangle::jni_mangle;
 use std::error::Error;
-use crate::shared_mem::{crete_shared_mem_ref, SharedMemRef, MAX_SHARED_LENGTH};
 
 /// org_eclipse_equinox_launcher_JNIBridge#_set_exit_data
 /// Signature: (Ljava/lang/String;Ljava/lang/String;)V
@@ -34,13 +34,16 @@ pub extern "system" fn set_exit_data(env: JNIEnv, object: JObject, id: JString, 
     }
 }
 
-fn set_exit_data_internal(env: &JNIEnv, _object: JObject, id: JString, s: JString) -> Result<(),Box<dyn Error>> {
+fn set_exit_data_internal(
+    env: &JNIEnv,
+    _object: JObject,
+    id: JString,
+    s: JString,
+) -> Result<(), Box<dyn Error>> {
     let s_jstr = env.get_string(s)?;
     let s_rstr = s_jstr.to_str()?;
-    
     let id_jstr = env.get_string(id)?;
     let id_rstr = id_jstr.to_str()?;
-    
     crete_shared_mem_ref(id_rstr, MAX_SHARED_LENGTH)?.write(s_rstr)?;
     Ok(())
 }
@@ -61,7 +64,7 @@ pub extern "system" fn set_launcher_info(
 /// Signature: ()V
 #[no_mangle]
 #[jni_mangle("org.eclipse.equinox.launcher.JNIBridge")]
-pub extern "system" fn update_splash(env: JNIEnv, object: JObject) -> () {}
+pub extern "system" fn update_splash(env: JNIEnv, object: JObject) {}
 
 /// org_eclipse_equinox_launcher_JNIBridge#_get_splash_handle
 /// Signature: ()J

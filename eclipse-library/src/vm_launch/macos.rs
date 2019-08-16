@@ -11,5 +11,16 @@
  * Contributors:
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
+ 
+use std::time::Duration;
 
-mod eclipse_jni;
+pub fn program_loop(mut is_term_callback: impl FnMut() -> bool) {
+    let dur = Duration::from_millis(100);
+    loop {
+        // TODO: platform GUI specific stuff
+        if is_term_callback() {
+            return;
+        }
+        std::thread::sleep(dur);
+    }
+}

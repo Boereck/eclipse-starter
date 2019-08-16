@@ -60,4 +60,12 @@ fn mangle_name(java_class: &str, fn_name: &str) -> String {
     format!("Java_{}__1{}", java_class, fn_name)
 }
 
-// TODO: tests
+#[cfg(test)]
+mod test {
+
+    #[test]
+    fn test_mangle_name() {
+        let result = super::mangle_name("foo.Bar", "some_method");
+        assert_eq!("Java_foo_Bar__1some_1method", result);
+    }
+}

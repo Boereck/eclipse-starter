@@ -140,6 +140,8 @@ fn filename_entry_tuple(entry: DirEntry) -> Option<(String, DirEntry)> {
     Some((name, entry))
 }
 
+/// This struct represents a SemVer version with 
+/// major, minor and patch version and a qualifier string.
 #[derive(Debug, Default, Ord, PartialOrd, Eq, PartialEq)]
 struct Version {
     major: u32,
@@ -275,4 +277,3 @@ mod tests {
         assert!(bigger > smaller);
     }
 }
-// TODO: test get_version and comparison between Version values

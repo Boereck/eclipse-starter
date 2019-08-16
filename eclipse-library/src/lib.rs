@@ -136,20 +136,21 @@
 //!     config file. This is consistent with the java behaviour in the following case:
 //!     java -Dtest="one" -Dtest="two" ...  : test is set to the value "two"
 
+mod eclipse_jni;
 mod eclipse_params_parse;
 mod ee_params_parse;
 mod errors;
 mod iter_ptr;
-mod java;
+mod jar_lookup;
 mod native_str_read;
 mod params;
 mod run;
-mod vm_args_read;
-mod vm_lookup;
-mod jar_lookup;
 mod shared_mem;
+mod splash;
+mod vm_args_read;
 mod vm_command;
 mod vm_launch;
+mod vm_lookup;
 
 use eclipse_common::native_str::NativeString;
 use lazy_static::lazy_static;

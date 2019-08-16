@@ -74,6 +74,10 @@ pub fn find_vm_library(
     lib
 }
 
+pub fn console_needed(params: &EclipseParams) -> bool {
+    params.console.is_set() || params.console_log || is_console_launcher()
+}
+
 /// Find the VM shared library starting from the java executable.
 fn find_lib(vm_exe_path: &Path, exe_dir: &Path) -> Option<PathBuf> {
     // First check if we point to library allready
@@ -265,9 +269,6 @@ fn adjust_search_path(lib_path: &Path, params: &EclipseParams, ee_props: Option<
     }
 }
 
-pub fn console_needed(params: &EclipseParams) -> bool {
-    params.console.is_set() || params.console_log || is_console_launcher()
-}
 
 fn is_console_launcher() -> bool {
     let console_hwnd = unsafe { wincon::GetConsoleWindow() };
