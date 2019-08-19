@@ -58,12 +58,26 @@ pub enum VmLaunchErr {
     RunFail(VmRunErr),
 }
 
+impl From<VmRunErr> for EclipseLibErr {
+    fn from(val: VmRunErr) -> EclipseLibErr {
+        EclipseLibErr::LaunchFail(VmLaunchErr::RunFail(val))
+    }
+}
+
+impl From<VmStartErr> for EclipseLibErr {
+    fn from(val: VmStartErr) -> EclipseLibErr {
+        EclipseLibErr::LaunchFail(VmLaunchErr::StartFail(val))
+    }
+}
+
 #[derive(Debug)]
 pub enum VmRunErr {
-    UnknownErr
+    FailureReturnCode(i32),
+    TerminationErr(std::io::Error),
+    UnknownErr,
 }
 
 #[derive(Debug)]
 pub enum VmStartErr {
-    ExeStartErr(std::io::Error)
+    ExeStartErr(std::io::Error),
 }

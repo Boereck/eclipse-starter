@@ -12,6 +12,9 @@
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
 
+//! This method provides the main `run_framework` method, which drives the 
+//! launcher code.
+
 use crate::eclipse_params_parse::parse_args;
 use crate::errors::EclipseLibErr;
 use crate::jar_lookup::find_startup_jar;
@@ -19,7 +22,7 @@ use crate::params::EclipseParams;
 use crate::shared_mem::{create_shared_mem, SharedMem, MAX_SHARED_LENGTH};
 use crate::vm_args_read::complete_vm_args;
 use crate::vm_command::{get_vm_command, VmArgs};
-use crate::vm_launch::JavaLauncher;
+use crate::vm_launch::{JavaLauncher, StopAction};
 use crate::vm_lookup::{determine_vm, JvmLaunchMode};
 use eclipse_common::name_util::get_default_official_name_from_str;
 use eclipse_common::path_util::strip_unc_prefix;
@@ -86,17 +89,33 @@ pub fn run_framework<S: AsRef<str>>(
         program_path,
     );
 
-    let vm_launcher = JavaLauncher::new(&vm_path, &vm_command, &jar_file);
+    let mut vm_launcher = JavaLauncher::new(&vm_path, &vm_command, &jar_file, &shared_data);
 
     // While the Java VM should be restarted
-    let mut running = true;
-    while running {
+    loop {
         // TODO: store vm command as message
         // TODO: if -debug, print start command to console
         // TODO: Handle result (restart if necessary)
-        vm_launcher.launch()?;
-        running = false;
+        match vm_launcher.launch()? {
+            StopAction::Nothing => {
+                // No reastart needed, stop the loop
+                break;
+            },
+            StopAction::RestartExeNewArgs(new_args) => {
+                // TODO: restart launcher with new_args
+                break;
+            },
+            StopAction::RestartExeLastArgs => {
+                // TODO: restart lauchner with current args
+                break;
+            },
+            StopAction::RestartVM => {
+                // Nothing to do, remain in restart loop
+            },
+        }
     }
+
+    shared_data.close()?;
 
     // TODO: Port rest of run from C
     Ok(())
