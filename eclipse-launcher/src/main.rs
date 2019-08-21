@@ -32,11 +32,11 @@ mod launcher_lib;
 mod params;
 
 use eclipse_common::arg_parser::*;
-use eclipse_common::ini_reader::*;
 use eclipse_common::eclipse_params_flags::*;
-use eclipse_common::option_util::opt_str;
-use eclipse_common::name_util::get_default_official_name;
+use eclipse_common::ini_reader::*;
 use eclipse_common::messagebox::display_message;
+use eclipse_common::name_util::get_default_official_name;
+use eclipse_common::option_util::opt_str;
 use eclipse_common::path_util::strip_unc_prefix;
 use errors::LauncherError;
 use exe_util::get_exe_path;
@@ -135,7 +135,7 @@ fn load_lib_and_run(
         .ok_or_else(|| MSG_EXE_PARENT_NOT_FOUND.to_string())?;
     // Find the eclipse library, load and initalize callable API
     let lib_path = find_library(&params.eclipse_library, exe_parent)?;
-    let lib = load_library(&lib_path)?;
+    let lib = load_library(&lib_path)?; // do not drop prior to dropping lib_api!
     let lib_api = new_launcher(&lib)?;
     // If no VM args are set use empty slice
     let lib_path_str = &lib_path
@@ -220,7 +220,6 @@ fn set_if_none<T>(target: &mut Option<T>, from: Option<T>) {
         target.get_or_insert(from_val);
     }
 }
-
 
 /// Determins if the configuration demands a check
 /// if the user staring this executable is the root user

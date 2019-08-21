@@ -37,6 +37,8 @@ lazy_static = "1.3.0"
 eclipse-common = { path = "../eclipse-common" }
 jni-mangle = { path = "../jni-mangle" }
 shared_memory = "0.8.2"
+dlopen = "0.1.7"
+dlopen_derive = "0.1.4"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 winapi = { version = "0.3.7", features = ["wincon", "winreg", "winver"]}

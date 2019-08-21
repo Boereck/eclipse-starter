@@ -228,6 +228,8 @@ dependencies = [
 name = "eclipse-library"
 version = "0.1.0"
 dependencies = [
+ "dlopen 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "dlopen_derive 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "eclipse-common 0.1.0",
  "jni 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jni-mangle 0.1.0",

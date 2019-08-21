@@ -17,6 +17,7 @@
 
 use std::error::Error;
 use std::fmt;
+use std::path::PathBuf;
 
 /// This is the error type for this crate. All introduced errors shall be
 /// a variant of this type.
@@ -56,6 +57,7 @@ impl Error for EclipseLibErr {
 pub enum VmLaunchErr {
     StartFail(VmStartErr),
     RunFail(VmRunErr),
+    MainClassNotFound{jar_file: PathBuf},
 }
 
 impl From<VmRunErr> for EclipseLibErr {
@@ -79,5 +81,7 @@ pub enum VmRunErr {
 
 #[derive(Debug)]
 pub enum VmStartErr {
+    NoVmArgs,
+    VmLoadLibErr(dlopen::Error),
     ExeStartErr(std::io::Error),
 }
