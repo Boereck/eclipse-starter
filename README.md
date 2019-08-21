@@ -23,7 +23,7 @@ drag [this Link](https://raw.githubusercontent.com/Boereck/eclipse-starter/maste
 (e.g. on node Github Projects). Select the newly created "Eclipse Starter" entry and click next. Fill in the required fileds,
 click "Finish" and let the installer do it's job.
 
-Or simply edit in the web via GitPod: 
+Or simply edit in the web via GitPod:  
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/Boereck/eclipse-starter)
 
 ## Build
