@@ -37,4 +37,22 @@ impl<T> Iterator for PtrIter<T> {
     }
 }
 
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn testIter() {
+        let mut elements = [42, 38, 4711, 0];
+        let el_ptr = elements.as_mut_ptr();
+        let mut iter = super::iter(el_ptr);
+        let first = iter.next().unwrap();
+        assert_eq!(42, first);
+        let second = iter.next().unwrap();
+        assert_eq!(38, second);
+        let third = iter.next().unwrap();
+        assert_eq!(4711, third);
+        let fourth = iter.next().unwrap();
+        assert_eq!(0, fourth);
+    }
+}
 // TODO: tests

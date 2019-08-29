@@ -38,6 +38,7 @@ pub fn complete_vm_args<'a, 'b, S: AsRef<str>>(
     vm_args: &'a [S],
     params: &'a EclipseParams,
     program: &'a Path,
+    win_console: bool,
 ) -> Result<Vec<Cow<'b, str>>, EclipseLibErr> where 'a : 'b {
     let mut result: Vec<Cow<'b,str>> = Vec::new();
 
@@ -63,7 +64,7 @@ pub fn complete_vm_args<'a, 'b, S: AsRef<str>>(
         let ini_params = vm_args_from_launcher_ini_from_config(params, program);
         result.extend(to_cows!(ini_params));
     }
-    let config_vm_args_iter = to_cows!(vm_args_from_config(params, program));
+    let config_vm_args_iter = to_cows!(vm_args_from_config(params, program, win_console));
     result.extend(config_vm_args_iter);
 
     // Add VM args from command-line (may be empty)
@@ -117,8 +118,8 @@ fn vm_args_from_launcher_ini_from_config(_params: &EclipseParams, _program: &Pat
     unimplemented!();
 }
 
-fn vm_args_from_config(params: &EclipseParams, program: &Path) -> Vec<String> {
-    if let Ok(lines_iter) = read_ini(&params.ini, program) {
+fn vm_args_from_config(params: &EclipseParams, program: &Path, win_console: bool) -> Vec<String> {
+    if let Ok(lines_iter) = read_ini(&params.ini, program, win_console) {
         let vm_args_iter = vm_args_from_params(lines_iter);
         vm_args_iter.collect()
     } else {

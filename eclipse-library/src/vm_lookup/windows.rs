@@ -14,6 +14,7 @@
 
 use super::common::{contains_paths, get_vm_library_search_path, is_vm_library};
 use crate::params::{EclipseEEProps, EclipseParams};
+use crate::console_detection::is_console_launcher;
 use eclipse_common::native_str::to_native_str;
 use eclipse_common::path_buf;
 use eclipse_common::path_util::PATHS_SEPARATOR;
@@ -267,10 +268,4 @@ fn adjust_search_path(lib_path: &Path, params: &EclipseParams, ee_props: Option<
         );
         std::env::set_var("PATH", new_path);
     }
-}
-
-
-fn is_console_launcher() -> bool {
-    let console_hwnd = unsafe { wincon::GetConsoleWindow() };
-    !console_hwnd.is_null()
 }

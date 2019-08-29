@@ -15,6 +15,7 @@
 //! This method provides the main `run_framework` method, which drives the 
 //! launcher code.
 
+use core::fmt::Debug;
 use crate::eclipse_params_parse::parse_args;
 use crate::errors::EclipseLibErr;
 use crate::jar_lookup::find_startup_jar;
@@ -24,13 +25,14 @@ use crate::vm_args_read::complete_vm_args;
 use crate::vm_command::{get_vm_command, VmArgs};
 use crate::vm_launch::{JavaLauncher, StopAction};
 use crate::vm_lookup::{determine_vm, JvmLaunchMode};
+use crate::console_detection::is_console_launcher;
 use eclipse_common::name_util::get_default_official_name_from_str;
 use eclipse_common::path_util::strip_unc_prefix;
 use std::path::Path;
 
 const ACTION_OPENFILE: &str = "openFile";
 
-pub fn run_framework<S: AsRef<str>>(
+pub fn run_framework<S: AsRef<str> + Debug>(
     args: &[S],
     vm_args: &[S],
     initial_args: &[S],
@@ -69,7 +71,8 @@ pub fn run_framework<S: AsRef<str>>(
     let jar_file_str = strip_unc_prefix(&jar_file.to_string_lossy()).to_string();
     parsed_args.startup = Some(jar_file_str);
 
-    let complete_vm_args = complete_vm_args(vm_args, &parsed_args, &program_path)?;
+    let win_console = is_console_launcher();
+    let complete_vm_args = complete_vm_args(&vm_args, &parsed_args, &program_path, win_console)?;
 
     let vm_path = determine_vm(&parsed_args, program_dir)?;
 

@@ -151,6 +151,7 @@ mod vm_args_read;
 mod vm_command;
 mod vm_launch;
 mod vm_lookup;
+mod console_detection;
 
 use eclipse_common::native_str::NativeString;
 use lazy_static::lazy_static;

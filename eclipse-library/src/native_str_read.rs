@@ -88,14 +88,14 @@ pub fn utf16_to_string(native_str: &NativeString) -> Option<String> {
 
 #[cfg(target_os = "windows")]
 pub fn count_u16_null_term(elem: *mut u16) -> usize {
-    count_elem_null_term(elem, 0)
+    count_elem_null_term(elem, |e| *e == 0)
 }
 
 pub fn count_ptrs_null_term<T>(elem: *mut *const T) -> usize {
-    count_elem_null_term(elem, ptr::null())
+    count_elem_null_term(elem, |e| e.is_null())
 }
 
 #[inline]
-pub fn count_elem_null_term<T: Eq>(elem: *mut T, nil: T) -> usize {
-    iter(elem).take_while(|c| c != &nil).count()
+pub fn count_elem_null_term<T: Eq>(elem: *mut T, is_nil: fn(&T)->bool) -> usize {
+    iter(elem).take_while(|c| !is_nil(c)).count()
 }

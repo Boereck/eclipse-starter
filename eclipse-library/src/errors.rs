@@ -77,11 +77,15 @@ pub enum VmRunErr {
     FailureReturnCode(i32),
     TerminationErr(std::io::Error),
     UnknownErr,
+    UnexpectedReturnValue,
 }
 
 #[derive(Debug)]
 pub enum VmStartErr {
     NoVmArgs,
     VmLoadLibErr(dlopen::Error),
+    CreateVmErr,
+    MainClassNotFound,
+    RunMethodNotInvokable,
     ExeStartErr(std::io::Error),
 }

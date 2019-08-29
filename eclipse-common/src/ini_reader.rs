@@ -31,11 +31,12 @@ use unicode_segmentation::UnicodeSegmentation;
 pub fn read_ini(
     user_defined_config: &Option<String>,
     exe_path: &Path,
+    win_console: bool,
 ) -> Result<impl Iterator<Item = String>, Error> {
     let ini_path = if let Some(user_ini) = user_defined_config {
         PathBuf::from(user_ini)
     } else {
-        exe_to_ini_path(exe_path)
+        exe_to_ini_path(exe_path, win_console)
     };
     read_ini_lines(ini_path)
 }
@@ -60,7 +61,7 @@ pub fn read_ini_lines<P: AsRef<Path>>(ini_path: P) -> Result<impl Iterator<Item 
 /// and adds the file extension `ini`. If the filename starts with
 /// `c` on windows, the prefix is removed. The prefix is used
 /// for launchers creating a console window on the win32 windowsing system.
-fn exe_to_ini_path(exe_path: &Path) -> PathBuf {
+fn exe_to_ini_path(exe_path: &Path, win_console: bool) -> PathBuf {
     let mut ini_path = exe_path.to_owned();
     ini_path.set_extension("ini");
 
@@ -75,7 +76,7 @@ fn exe_to_ini_path(exe_path: &Path) -> PathBuf {
 
     // We are the (win) console version, if the ini file does not exist, try
     // removing the 'c' from the end of the program name
-    if cfg!(all(target_os = "windows", feature = "win_console")) {
+    if win_console {
         let adjusted_file_name_opt = adjust_console_file_name(&ini_path);
         if let Some(adjusted_file_name) = adjusted_file_name_opt {
             ini_path.set_file_name(adjusted_file_name);

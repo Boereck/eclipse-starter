@@ -92,8 +92,9 @@ fn fallible_main(params: &mut EclipseLauncherParams) -> Result<(), LauncherError
 
     // Determine the full pathname of this program.
     let exe_path = get_exe_path().map_err(|_| MSG_EXE_LOCATION_NOT_FOUND)?;
+    let win_console = cfg!(all(target_os = "windows", feature = "win_console"));
     // read ini, only set params not already defined by program arguments
-    if let Ok(ini_file_lines) = read_ini(&params.launcher_ini, &exe_path) {
+    if let Ok(ini_file_lines) = read_ini(&params.launcher_ini, &exe_path, win_console) {
         // we strip vmargs off (since the original launcher had this behavior,
         // see eclipseMain.c main calling parseArgs with useVMargs = 0)
         let ini_lines_no_vmargs = ini_file_lines.take_while(|s| s != VMARGS);
