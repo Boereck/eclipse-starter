@@ -15,6 +15,7 @@
 //! This module provides the method `is_console_launcher` which can detect if the 
 //! executable which called the library is a windows console executable.
 
+#[cfg(target_os="windows")]
 use winapi::um::wincon; 
 
 #[cfg(target_os = "windows")]
