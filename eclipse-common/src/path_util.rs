@@ -140,7 +140,7 @@ fn filename_entry_tuple(entry: DirEntry) -> Option<(String, DirEntry)> {
     Some((name, entry))
 }
 
-/// This struct represents a SemVer version with 
+/// This struct represents a SemVer version with
 /// major, minor and patch version and a qualifier string.
 #[derive(Debug, Default, Ord, PartialOrd, Eq, PartialEq)]
 struct Version {
@@ -157,7 +157,7 @@ struct Version {
 fn get_version(file_name: &str) -> Version {
     lazy_static! {
         /// Regex matching "_major.minor.patch.qualifier" where the part after mayor is optional
-        static ref VERSION_REGEX: Regex = Regex::new(r"_(?P<major>\d+)(\.(?P<minor>\d+)\.(?P<patch>\d+)\.(?P<qualifier>.*))?.*").unwrap();
+        static ref VERSION_REGEX: Regex = Regex::new(r"_(?P<major>(?-u:\d)+)(\.(?P<minor>(?-u:\d)+)\.(?P<patch>(?-u:\d)+)\.(?P<qualifier>.*))?.*").unwrap();
     }
     let captures_opt = VERSION_REGEX.captures(file_name);
     if let Some(captures) = captures_opt {
