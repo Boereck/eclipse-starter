@@ -21,6 +21,7 @@
 mod os;
 mod exe_launch;
 mod jni_launch;
+mod common;
 
 use crate::errors::{EclipseLibErr, VmLaunchErr, VmRunErr, VmStartErr};
 use crate::shared_mem::SharedMem;

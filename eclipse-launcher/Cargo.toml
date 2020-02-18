@@ -30,7 +30,7 @@ eclipse-common = { path = "../eclipse-common" }
 
 
 [target.'cfg(not(target_os = "windows"))'.dependencies]
-libc = "0.2.60"
+libc = "0.2.62"
 
 [build-dependencies]
 winres = "0.1.11"

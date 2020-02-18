@@ -12,6 +12,8 @@
  *     Max Bureck (Fraunhofer FOKUS)
  *******************************************************************************/
 
+use super::common::StringHolder;
+use super::os::to_string_holder;
 use super::{os, StopAction, RESTART_LAST_EC, RESTART_NEW_EC};
 use crate::eclipse_jni::*;
 use crate::errors::{EclipseLibErr, VmRunErr, VmStartErr};
@@ -19,6 +21,7 @@ use crate::shared_mem::SharedMem;
 use crate::vm_command::VmArgs;
 use dlopen::wrapper::{Container, WrapperApi};
 use dlopen_derive::*;
+use eclipse_common::native_str::to_native_str;
 use eclipse_common::path_util::strip_unc_prefix;
 use jni::objects::{JClass, JObject, JString, JValue};
 use jni::sys;
@@ -48,12 +51,15 @@ struct JvmLibrary {
     ) -> jint,
 }
 
-pub(super) fn launch_jni<'a, S: SharedMem>(
+pub(super) fn launch_jni<'a, 'o, S: SharedMem>(
     jni_lib: &Path,
     jar_file: &Path,
-    args: &VmArgs<'_>,
+    args: &'a VmArgs<'a>,
     shared_mem: &S,
-) -> Result<StopAction, EclipseLibErr> {
+) -> Result<StopAction, EclipseLibErr>
+where
+    'a: 'o,
+{
     let mut jvm: *mut sys::JavaVM = std::ptr::null_mut();
     let mut env_raw: *mut sys::JNIEnv = std::ptr::null_mut();
 
@@ -65,91 +71,80 @@ pub(super) fn launch_jni<'a, S: SharedMem>(
     let jni_lib_stripped = strip_unc_prefix(&jni_lib_str);
     let lib: Container<JvmLibrary> =
         unsafe { Container::load(jni_lib_stripped) }.map_err(VmStartErr::VmLoadLibErr)?;
+    
+    let vm_args_ref: &'a _ = &args.vm_args;
+    let arg_strs_itr = vm_args_ref.iter().map(|s| -> &'a str { &s });
+    let platform_strs_holder = to_string_holder::<'a, 'o>(arg_strs_itr);
+	
+	// TODO remove when code below works
+	Err(VmStartErr::NoVmArgs)?
 
-    let mut native_vm_args_holder: Vec<CString> = args
-        .vm_args
-        .iter()
-        .filter_map(|s| {
-            let st: &str = &s;
-            CString::new(st).ok()
-        })
-        .collect();
-
-    dbg!(&native_vm_args_holder);
-
-    dbg!("Building VM Options");
-    let mut vm_options: Vec<JavaVMOption> = native_vm_args_holder
-        .iter_mut()
-        .map(|s| s.as_ptr())
-        .map(|s_ptr| JavaVMOption {
-            optionString: s_ptr as *mut i8, // we assume the JVM is only reading!
-            extraInfo: std::ptr::null_mut(),
-        })
-        .collect();
-
-    dbg!("Building JavaVMInitArgs");
-    let mut init_args = JavaVMInitArgs {
-        version: if cfg!(target_os = "macos") {
-            JNI_VERSION_1_4
-        } else {
-            JNI_VERSION_1_2
-        },
-        options: vm_options.as_mut_ptr(),
-        nOptions: args.vm_args.len().try_into().unwrap_or(i32::max_value()),
-        ignoreUnrecognized: JNI_TRUE,
-    };
-
-    dbg!("About to call Create VM");
-    let jvm_ptr: *mut *mut sys::JavaVM = &mut jvm;
-    let env_raw_ptr: *mut *mut sys::JNIEnv = &mut env_raw;
-    let init_args_ptr: *mut JavaVMInitArgs = &mut init_args;
-    let vm_create_result = unsafe {
-        lib.jni_create_java_vm(
-            dbg!(jvm_ptr),
-            dbg!(env_raw_ptr) as *mut *mut c_void,
-            dbg!(init_args_ptr) as *mut c_void,
-        )
-    };
-    dbg!("After jni_create_java_vm");
-
-    if dbg!(vm_create_result) != JNI_OK {
-        Err(VmStartErr::CreateVmErr)?;
-    }
-    dbg!(jvm);
-    dbg!(env_raw);
-
-    let env: JNIEnv<'a> =
-        unsafe { JNIEnv::from_raw(env_raw) }.map_err(|_| VmStartErr::CreateVmErr)?;
-    register_natives(&env, env_raw);
-
-    let main_class = get_main_class(&env, jar_file)
-        .or_else(|| {
-            // fallback to hardcoded name
-            clear_exception(&env);
-            env.find_class("org/eclipse/equinox/launcher/Main").ok()
-        })
-        .ok_or(VmStartErr::MainClassNotFound)?;
-    dbg!(main_class);
-
-    let ctor_args = [];
-    let main_obj = env
-        .new_object(main_class, "<init>", &ctor_args)
-        .map_err(|_| VmStartErr::RunMethodNotInvokable)?;
-    dbg!(main_obj);
-
-    let run_args = create_run_args(&env, args)?;
-
-    let run_result = env
-        .call_method(main_obj, "run", "([Ljava/lang/String;)I", &run_args)
-        .map_err(|_| VmStartErr::RunMethodNotInvokable)?;
-
-    // TODO: port (*env)->DeleteLocalRef(env, methodArgs);
-    clear_exception(&env);
-
-    match run_result {
-        JValue::Int(return_value) => result_from_jni_exit_code(return_value, shared_mem),
-        _ => Err(VmRunErr::UnexpectedReturnValue.into()),
-    }
+    // Block only needed to reduce lifetime scope of refernece
+//    let platform_strs_holder_ref: &'o _ = &platform_strs_holder;
+//    let mut vm_options: Vec<JavaVMOption> = platform_strs_holder_ref
+//        .get_strings()
+//        .map(|s_ptr| JavaVMOption {
+//            optionString: s_ptr, // we assume the JVM is only reading!
+//            extraInfo: std::ptr::null_mut(),
+//        })
+//        .collect();
+//
+//    let mut init_args = JavaVMInitArgs {
+//        version: if cfg!(target_os = "macos") {
+//            JNI_VERSION_1_4
+//        } else {
+//            JNI_VERSION_1_2
+//        },
+//        options: vm_options.as_mut_ptr(),
+//        nOptions: vm_options.len().try_into().unwrap_or(i32::max_value()),
+//        ignoreUnrecognized: JNI_TRUE,
+//    };
+//
+//    let jvm_ptr: *mut *mut sys::JavaVM = &mut jvm;
+//    let env_raw_ptr: *mut *mut sys::JNIEnv = &mut env_raw;
+//    let init_args_ptr: *mut JavaVMInitArgs = &mut init_args;
+//    let vm_create_result = unsafe {
+//        lib.jni_create_java_vm(
+//            jvm_ptr,
+//            env_raw_ptr as *mut *mut c_void,
+//            init_args_ptr as *mut c_void,
+//        )
+//    };
+//
+//    if vm_create_result != JNI_OK {
+//        Err(VmStartErr::CreateVmErr)?;
+//    }
+//
+//    let env: JNIEnv<'a> =
+//        unsafe { JNIEnv::from_raw(env_raw) }.map_err(|_| VmStartErr::CreateVmErr)?;
+//    register_natives(&env, env_raw);
+//
+//    let main_class = get_main_class(&env, jar_file)
+//        .or_else(|| {
+//            // fallback to hardcoded name
+//            clear_exception(&env);
+//            env.find_class("org/eclipse/equinox/launcher/Main").ok()
+//        })
+//        .ok_or(VmStartErr::MainClassNotFound)?;
+//
+//    let ctor_args = [];
+//    let main_obj = env
+//        .new_object(main_class, "<init>", &ctor_args)
+//        .map_err(|_| VmStartErr::RunMethodNotInvokable)?;
+//
+//    let run_args = create_run_args(&env, args)?;
+//
+//    let run_result = env
+//        .call_method(main_obj, "run", "([Ljava/lang/String;)I", &run_args)
+//        .map_err(|_| VmStartErr::RunMethodNotInvokable)?;
+//
+//    // TODO: port (*env)->DeleteLocalRef(env, methodArgs);
+//    clear_exception(&env);
+//
+//    match run_result {
+//        JValue::Int(return_value) => result_from_jni_exit_code(return_value, shared_mem),
+//        _ => Err(VmRunErr::UnexpectedReturnValue.into()),
+//    }
 }
 
 fn result_from_jni_exit_code<S: SharedMem>(
@@ -187,13 +182,11 @@ fn register_natives(env: &JNIEnv, env_raw: *mut sys::JNIEnv) {
     };
     let bridge_name = CString::new("org/eclipse/equinox/launcher/JNIBridge").unwrap_or_default();
     let bridge: jclass = unsafe { find_class(env_raw, bridge_name.as_ptr()) };
-    dbg!(bridge);
     if let Some(reg_natives) = env_ref.RegisterNatives {
         let len = natives.len().try_into().unwrap_or(0);
         let reg_res = unsafe {
             reg_natives(env_raw, bridge, natives.as_mut_ptr(), len);
         };
-        dbg!(reg_res);
     }
     clear_exception(&env);
 }

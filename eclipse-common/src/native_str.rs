@@ -15,7 +15,7 @@
 //! This module provides types for OS native strings
 //! and some methods for converting Rust strings into Windows wide (UTF-16) strings.
 
-#[cfg(not(windows))]
+#[cfg(not(target_os = "windows"))]
 use std::os::raw::c_char;
 
 // On Windows we use UTF-16 chars
