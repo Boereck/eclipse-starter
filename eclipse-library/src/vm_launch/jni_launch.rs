@@ -20,7 +20,6 @@ use crate::shared_mem::SharedMem;
 use crate::vm_command::VmArgs;
 use dlopen::wrapper::{Container, WrapperApi};
 use dlopen_derive::*;
-use eclipse_common::native_str::to_native_str;
 use eclipse_common::path_util::strip_unc_prefix;
 use jni::objects::{JClass, JObject, JString, JValue};
 use jni::sys;
