@@ -35,14 +35,6 @@ libc = "0.2.62"
 [build-dependencies]
 winres = "0.1.11"
 
-[profile.release]
-opt-level = 'z'
-lto = true
-codegen-units = 1
-panic = 'abort'
-incremental = false
-debug = false
-
 [[bin]]
 name = "eclipse"
 path="src/main.rs"

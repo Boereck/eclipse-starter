@@ -18,3 +18,11 @@ members = [
     "eclipse-library",
     "jni-mangle",
 ]
+
+[profile.release]
+opt-level = 'z'
+lto = true
+codegen-units = 1
+panic = 'abort'
+incremental = false
+debug = false
